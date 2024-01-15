@@ -1,0 +1,8 @@
+**/work
+.nextflow.log*
+.nextflow
+*.nextflow.log.1*
+**/results
+**/conda
+.nextflow.log.1
+Input
