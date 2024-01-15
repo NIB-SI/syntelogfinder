@@ -1,0 +1,9 @@
+name: orthofinder
+channels:
+  - conda-forge
+  - bioconda
+  - default
+    dependencies:
+  - blast
+
+
