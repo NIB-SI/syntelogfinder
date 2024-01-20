@@ -6,3 +6,4 @@
 **/conda
 .nextflow.log.1
 Input
+**/gff_reference

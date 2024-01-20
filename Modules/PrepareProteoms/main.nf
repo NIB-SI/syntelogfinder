@@ -7,6 +7,7 @@ process download_rename {
     output:
         path("GFF_Split")
         path("Haplotype_Split")
+        path('cDNA_Split')
               
     script:
     """

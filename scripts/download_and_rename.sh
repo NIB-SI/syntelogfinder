@@ -8,7 +8,7 @@ download() {
 }
 
 # Create directories
-mkdir -p Haplotype_Split GFF_Split || { echo "Failed to create directories"; exit 1; }
+mkdir -p Haplotype_Split GFF_Split cDNA_Split|| { echo "Failed to create directories"; exit 1; }
 
 # Process CR
 mkdir -p Input/cr
@@ -44,6 +44,7 @@ mkdir -p Input/at
     cd Input/at
     download http://spuddb.uga.edu/data/ATL_v3/ATL_v3.hc_gene_models.repr.pep.fa.gz "ATL_v3.hc_gene_models.repr.pep.fa.gz"
     download http://spuddb.uga.edu/data/ATL_v3/ATL_v3.hc_gene_models.repr.gff3.gz "ATL_v3.hc_gene_models.repr.gff3.gz"
+    download http://spuddb.uga.edu/data/ATL_v3/ATL_v3.hc_gene_models.repr.cdna.fa.gz "ATL_v3.hc_gene_models.repr.cdna.fa.gz"
 
      # Define two arrays
     hap_numbers=("1" "2" "3" "4")
@@ -62,6 +63,7 @@ mkdir -p Input/at
         letter="${hap_letters[$i]}"
 
         zcat ATL_v3.hc_gene_models.repr.pep.fa.gz | seqkit grep -r -p "Soltu.Atl_v3.*_$number" > "../../Haplotype_Split/A$letter.fa"
+        zcat ATL_v3.hc_gene_models.repr.cdna.fa.gz | seqkit grep -r -p "Soltu.Atl_v3.*_$number" > "../../cDNA_Split/A$letter.fa"
         zcat ATL_v3.hc_gene_models.repr.gff3.gz | grep -E "chr.*_$number" | sed  "s/chr\([0-9]*\)_$number/A$letter\1/g" | sed "s/A${letter}0/A$letter/g"  > "../../GFF_Split/A$letter.gff"
     done
 )

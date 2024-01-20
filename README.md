@@ -1,4 +1,13 @@
 # potato-allelic-orthogroups
+
+
+
+
+anaylsing transcriptome complexitiy:
+- download http://spuddb.uga.edu/data/ATL_v3/ATL_v3.hc_gene_models.gff3.gz
+- gunzip and move to gff_references
+
+
 Nextflow pipeline to unify gene IDs of phased potato references based on orthogroups 
 
 pipeline to create input for SAynVisio to vizualize the 12 x 4n chromosomes from Otava, Atlantic and Castle Russet
@@ -18,6 +27,11 @@ cat * > Otava.fa
 
 Atlantic
 high confidence gene models
+
+
+
+
+
 http://spuddb.uga.edu/data/ATL_v3/ATL_v3.working_models.repr.pep.fa.gz
  mv ATL_v3.working_models.repr.pep.fa.gz atlantic.fa
 
