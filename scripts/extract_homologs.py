@@ -27,7 +27,6 @@ def split_columns(df):
 
     return df 
     
-
 # Function to concatenate columns with handling NaN values
 def concatenate_columns(row, columns):
     values = []
@@ -36,8 +35,6 @@ def concatenate_columns(row, columns):
             values.append(str(row[col]))  # Convert to string
         else:
             values.append('NaN')  # Or any other string value you prefer for missing data
-
-
     return ', '.join(values)
 
 # Function to count unique gene IDs per row
@@ -50,7 +47,6 @@ def count_unique_gene_ids(row):
 # Function to count the number of columns with gene IDs per row
 def count_columns_with_gene_ids(row):
     return sum(pd.notnull(row[col]) and row[col] != '' for col in ['Aa', 'Ab', 'Ac', 'Ad'])
-
 
 def filter_chromosomes(df):
     # Function to extract chromosome number
@@ -133,6 +129,33 @@ def merge_ortho_with_dup(df_orth, df_cluster):
     return result_df
    
 
+def analyse_df(df):
+    number_of_orthogroups = len(df)
+    print(df['Unique_Sequences'].value_counts())
+    print(df.groupby('Unique_Sequences'))
+    columns = ['Total_Gene_IDs', 'Unique_Sequences', 'Columns_with_Gene_IDs']
+    print(df[df[columns].apply(lambda row: row == 2).all(axis=1)])
+
+    for haplotype in [1,2,3,4,5]:
+        print(str(haplotype) + '-ploid')
+        print(df[df[columns].apply(lambda row: row == haplotype).all(axis=1)])
+        print('orthogroups: ' + str(len(df[df[columns].apply(lambda row: row == haplotype).all(axis=1)])))
+        print('genes: ' + str(haplotype * len(df[df[columns].apply(lambda row: row == haplotype).all(axis=1)])))
+        df_filter = df[df[columns].apply(lambda row: row == haplotype).all(axis=1)]
+        df_filter.to_csv(str(haplotype) + 'ploid_groups.tsv', index=False, sep = "\t")
+        # check for groups with n items in haplgroups but identical sequences
+        # print('orthogroups: ' + str(len(
+        # !!does not work
+        # print(df[list(df['Unique_Sequences'] == haplotype) and list(df['Columns_with_Gene_IDs'] == haplotype) and list(df['Total_Gene_IDs'] == haplotype)])
+        duplicates = df['Unique_Sequences'] == 1
+        condition2 = df['Columns_with_Gene_IDs'] == haplotype
+        condition3 = df['Total_Gene_IDs'] == haplotype
+
+        # Combine the conditions
+        df_not_unique = df[duplicates & condition2 & condition3]
+        print('not unique: ' + str(haplotype) + str(len(df_not_unique)))
+
+
 
 
 def count_dups(result_df):
@@ -150,7 +173,6 @@ def count_dups(result_df):
         for item in str(row[col]).split(',') 
         if item.strip() != '' and not pd.isna(item)
     )), axis=1)
-
 
 
     result_df = filter_chromosomes(result_df)
@@ -175,6 +197,7 @@ def count_dups(result_df):
 
     # Display the first few rows of the dataframe to verify
     result_df.to_csv('N0_short_dup.tsv', index=False, sep = "\t")
+    return result_df
 
 
 def get_perfect_homologs(data):
@@ -237,4 +260,7 @@ dup_file = args.dublication_file
 df_dup = read_duplication_file(dup_file)
 orthogroup_file = pd.read_csv(input_file, sep = "\t")
 df = merge_ortho_with_dup(orthogroup_file, df_dup)
-count_dups(df)
+df = count_dups(df)
+
+analyse_df(df)
+
