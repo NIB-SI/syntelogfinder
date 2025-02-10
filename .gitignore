@@ -9,3 +9,7 @@ Input
 **/gff_reference
 *ploid_groups.tsv
 N0_short_dup.tsv
+.codegpt
+*test*
+*unique*
+*/scripts/gff.db

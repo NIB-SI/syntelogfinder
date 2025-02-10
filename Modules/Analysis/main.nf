@@ -16,6 +16,7 @@ process look_at_exact_dups {
     python /scratch/nadjafn/potato-allelic-orthogroups/scripts/cluster_diamon.py ${blast} ${blast}_out.tsv
     mkdir $meta 
     mv ${blast}_out.tsv $meta 
+    mv .command.out $meta
     mv *png $meta
     """
 }

@@ -14,13 +14,13 @@ def parse_datagram(lines):
     for line in lines[1:]:
         parts = line.split()
         index = parts[0].split('-')[1]
-        gene1 = parts[1]
-        gene2 = parts[2]
+        gene1 = parts[2]
+        gene2 = parts[3]
         e_value_line = parts[3] if len(parts) == 4 else None
 
         # Check if either of the gene IDs contains 'Soltu.Atl_v3.'
-        if 'Soltu.Atl_v3.' in gene1 and 'Soltu.Atl_v3.' in gene2:
-            data.append([alignment_id, index, gene1, gene2, e_value_line])
+        #if 'Soltu.Atl_v3.' in gene1 and 'Soltu.Atl_v3.' in gene2:
+        data.append([alignment_id, index, gene1, gene2, e_value_line])
     
     # Creating a DataFrame
     if data:  # Only create a DataFrame if there is data
@@ -43,6 +43,10 @@ with open(args.file_path, 'r') as file:
 
 datagrams = []
 current_datagram = []
+
+# skip the lines until first appearance of '## '
+while not lines[0].startswith('## '):
+    lines.pop(0)
 
 for line in lines:
     if line.startswith('## '):

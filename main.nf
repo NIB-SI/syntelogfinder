@@ -4,7 +4,7 @@
 
 
 log.info """\
-         ASE benchmarking P I P E L I N E    
+         Syntleog P I P E L I N E    
          ===================================
          
          """
@@ -13,17 +13,27 @@ log.info """\
 // import processes from modules
 include { download_rename; merge_gff_to_bed } from './Modules/PrepareProteoms'
 include { run_OrthoFinder } from './Modules/OrthoFinder'
-include { run_diamond_all; filter_diamond } from './Modules/Diamond'
+include { DIAMOND } from './Modules/Diamond'
 include { run_MCScanX } from './Modules/MCscanX'
 include { run_cd_hit } from './Modules/CDHit'
-include { add_parent_to_gff; run_tranD; gff3_to_gtf; count_exons } from './Modules/TranD'
 include { run_blastn } from './Modules/Blast'
 include { look_at_exact_dups } from './Modules/Analysis'
+include { AGAT_spKeepLongestIsoform} from './Modules/AGAT/spKeepLongestIsoform'
+include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED }  from './Modules/gffread'
+include { SPLIT_HAPLOTYPES } from './Modules/Split_haplotypes'
+include { GENESPACE_INPUT_PREPERATION } from './Modules/genespace/genespace_input_preperation'
+include { GENESPACE_RUN } from './Modules/genespace/genespace_run'
+// problem:: task.ext. only applicable to GFFREAD
+// maybe use bed tools to convert gff to bed
+// params.reference_fasta = '/scratch/nadjafn/reference/Desiree_v1/De_v1.fa'
+params.reference_fasta = "/scratch/nadjafn/reference/Atlantic/ATL_v3.asm.fa"
+// params.reference_gff = '/scratch/nadjafn/reference/Desiree_v1/De_v1.functional_annotations_nodigits.gff'
+// params.reference_gff = "/scratch/nadjafn/reference/Atlantic/ATL_v3.hc_gene_models.repr.gff3"
+params.reference_gff = "/scratch/nadjafn/reference/Atlantic/updated_v62Atl_liftoff_a0.9s0.9_ALL.gff"
+params.outdir = '/DKED/scratch/nadjafn/potato-allelic-orthogroups/output'
+params.mcscanx_path = '/DKED/scratch/nadjafn/MCScanX'
+// params.config = '/DKED/scratch/nadjafn/potato-allelic-orthogroups/conf/nextflow.config'
 
-
-params.reference_dir = '/scratch/nadjafn/potato-allelic-orthogroups/potato_culitvar_references'
-params.mcScanX_dir = 'Input_MCscanX/cultivars'
-params.hc_gene_models_gff = '/scratch/nadjafn/potato-allelic-orthogroups/gff_reference/ATL_v3.hc_gene_models.gff3'
 
 
 
@@ -34,28 +44,54 @@ params.hc_gene_models_gff = '/scratch/nadjafn/potato-allelic-orthogroups/gff_ref
 //     }   | view
 
 
-prot_dir = Channel.fromPath(params.prot_dir)
-mcScanX_dir = Channel.fromPath(params.mcScanX_dir)
-culitvar = Channel.of('AT_CR_OT')
-hc_gene_models_gff  = Channel.fromPath(params.hc_gene_models_gff)
+gff  = Channel.fromPath(params.reference_gff)
+
+
+gff.map { gff ->
+    tuple(meta = [id: gff.baseName], gff)
+}.set { gff_ch }
+
+fasta = Channel.fromPath(params.reference_fasta)
 
 workflow {
     //get_CDS(genome_with_gff)
-    (gff_dir, prot_dir, cDNA_dir) = download_rename(culitvar)
-    diamond_blast = run_diamond_all(prot_dir)
 
-    merged_bed = merge_gff_to_bed(gff_dir)
-    run_MCScanX(merged_bed, diamond_blast)
-    run_OrthoFinder(prot_dir, 'A')
-    diamond_out = filter_diamond(prot_dir, 'A')
-    blast_out = run_blastn(cDNA_dir, 'A')
+    // run AGAT_spKeepLongestIsoform
+    agat_output = AGAT_spKeepLongestIsoform(gff_ch)
 
-    // analyse number of dublicated genes
-    look_at_exact_dups(blast_out.concat(diamond_out))
+    // split gff into haplotypes
+    split_gff = SPLIT_HAPLOTYPES(agat_output.output_gtf)
 
-    gff = add_parent_to_gff(hc_gene_models_gff)
-    gtf_file = gff3_to_gtf(gff)
-    gtf_file = count_exons(gtf_file)
-    //run_tranD(gtf_file)
+    // put haplotypes in seperate channels
+    haplotype_ch = split_gff.output_gtf.transpose().combine(fasta)
+    haplotype_ch.multiMap { id, gff, fasta ->
+        gff: tuple(meta = [id: gff.baseName, cultivar: id], gff)
+        fasta: [fasta]
+    }.set { haplotype_ch }
 
+    // run gffread to extract protein sequences
+    gffread_output_prot = GFFREAD_PROT(haplotype_ch.gff, haplotype_ch.fasta)
+
+    // run gffread to convert gff to bed 
+    gffread_output_bed = GFFREAD_BED(haplotype_ch.gff, haplotype_ch.fasta)
+
+    // combine gffread outputs for genespace
+    gffread_output_prot.gffread_fasta.map { meta, gff ->
+        tuple(meta = meta.cultivar, gff.baseName, gff)
+    }.set { gffread_output_prot }
+
+
+    gffread_output_bed.gffread_gff.map { meta, gff ->
+        tuple(meta = meta.cultivar, gff.baseName, gff)
+    }.set { gffread_output_bed }
+
+    // Combine the two channels
+    gffread_output = gffread_output_prot.join(gffread_output_bed, by: [0, 1]).groupTuple(by: 0)
+
+    // prepare genespace run
+    genespace_input = GENESPACE_INPUT_PREPERATION(gffread_output)
+    genespace_input.dir.view()
+
+    // run genespace
+    genespace_run = GENESPACE_RUN(genespace_input.dir, params.mcscanx_path)
 }
