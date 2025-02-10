@@ -12,4 +12,4 @@ N0_short_dup.tsv
 .codegpt
 *test*
 *unique*
-*/scripts/gff.db
+scripts/gff.db
