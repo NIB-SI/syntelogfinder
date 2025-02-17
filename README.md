@@ -8,7 +8,9 @@ Codong sequence or transcript sequence?
 
 minimal input:
 - genome fasta
-- gff
+- gff with CDS!!!
+
+
 
 
 

@@ -11,28 +11,30 @@ log.info """\
          .stripIndent()
 
 // import processes from modules
-include { download_rename; merge_gff_to_bed } from './Modules/PrepareProteoms'
-include { run_OrthoFinder } from './Modules/OrthoFinder'
-include { DIAMOND } from './Modules/Diamond'
-include { run_MCScanX } from './Modules/MCscanX'
-include { run_cd_hit } from './Modules/CDHit'
-include { run_blastn } from './Modules/Blast'
-include { look_at_exact_dups } from './Modules/Analysis'
-include { AGAT_spKeepLongestIsoform} from './Modules/AGAT/spKeepLongestIsoform'
-include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED }  from './Modules/gffread'
-include { SPLIT_HAPLOTYPES } from './Modules/Split_haplotypes'
-include { GENESPACE_INPUT_PREPERATION } from './Modules/genespace/genespace_input_preperation'
-include { GENESPACE_RUN } from './Modules/genespace/genespace_run'
+include { download_rename; merge_gff_to_bed } from './modules/PrepareProteoms'
+include { run_OrthoFinder } from './modules/OrthoFinder'
+include { DIAMOND } from './modules/Diamond'
+include { run_MCScanX } from './modules/MCscanX'
+include { run_cd_hit } from './modules/CDHit'
+include { run_blastn } from './modules/Blast'
+include { look_at_exact_dups } from './modules/Analysis'
+include { AGAT_spKeepLongestIsoform} from './modules/AGAT/spKeepLongestIsoform'
+include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED; GFFREAD as GFFREAD_CDS }  from './modules/gffread'
+include { SPLIT_HAPLOTYPES } from './modules/Split_haplotypes'
+include { GENESPACE_INPUT_PREPERATION } from './modules/genespace/genespace_input_preperation'
+include { GENESPACE_RUN } from './modules/genespace/genespace_run'
+include { GENESPACE_PARSE } from './modules/genespace/genespace_parse'
+include { CDHIT_CDHITEST } from '/scratch/nadjafn/modules/modules/nf-core/cdhit/cdhitest/'
 // problem:: task.ext. only applicable to GFFREAD
 // maybe use bed tools to convert gff to bed
-// params.reference_fasta = '/scratch/nadjafn/reference/Desiree_v1/De_v1.fa'
-params.reference_fasta = "/scratch/nadjafn/reference/Atlantic/ATL_v3.asm.fa"
-// params.reference_gff = '/scratch/nadjafn/reference/Desiree_v1/De_v1.functional_annotations_nodigits.gff'
+params.reference_fasta = '/scratch/nadjafn/reference/Desiree_v1/De_v1.fa'
+// params.reference_fasta = "/scratch/nadjafn/reference/Atlantic/ATL_v3.asm.fa"
+params.reference_gff = '/scratch/nadjafn/reference/Desiree_v1/De_v1.functional_annotations_nodigits.gff'
 // params.reference_gff = "/scratch/nadjafn/reference/Atlantic/ATL_v3.hc_gene_models.repr.gff3"
-params.reference_gff = "/scratch/nadjafn/reference/Atlantic/updated_v62Atl_liftoff_a0.9s0.9_ALL.gff"
+// params.reference_gff = "/scratch/nadjafn/reference/Atlantic/updated_v62Atl_liftoff_a0.9s0.9_ALL.gff"
 params.outdir = '/DKED/scratch/nadjafn/potato-allelic-orthogroups/output'
 params.mcscanx_path = '/DKED/scratch/nadjafn/MCScanX'
-// params.config = '/DKED/scratch/nadjafn/potato-allelic-orthogroups/conf/nextflow.config'
+params.config = '/DKED/scratch/nadjafn/potato-allelic-orthogroups/conf/nextflow.config'
 
 
 
@@ -58,7 +60,7 @@ workflow {
 
     // run AGAT_spKeepLongestIsoform
     agat_output = AGAT_spKeepLongestIsoform(gff_ch)
-
+    agat_output.output_gtf.view()
     // split gff into haplotypes
     split_gff = SPLIT_HAPLOTYPES(agat_output.output_gtf)
 
@@ -90,8 +92,18 @@ workflow {
 
     // prepare genespace run
     genespace_input = GENESPACE_INPUT_PREPERATION(gffread_output)
-    genespace_input.dir.view()
 
     // run genespace
     genespace_run = GENESPACE_RUN(genespace_input.dir, params.mcscanx_path)
+
+    // parse genespace output
+    genespace_parse = GENESPACE_PARSE(genespace_run.pangenes.join(agat_output.output_gtf))
+
+    // extract CDS sequences 
+    gffread_cds_output = GFFREAD_CDS(genespace_parse.gff, haplotype_ch.fasta)
+
+
+    gffread_cds_output.gffread_fasta.view()
+    // cluster CDS sequences
+    CDHIT_CDHITEST(gffread_cds_output.gffread_fasta)
 }

@@ -23,7 +23,7 @@ process SPLIT_HAPLOTYPES {
     def ploidy = task.ext.ploidy ?: 4
     """
     for ((i=1; i<=$ploidy; i++)); do
-        grep -e "chr_\\?[0-9]*_\${i}" "$gff" > "hap\${i}.gff"
+        grep -e "chr_\\?[0-9]\\+_\${i}" "$gff" > "hap\${i}.gff"
     done
 
 

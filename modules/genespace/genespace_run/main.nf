@@ -13,7 +13,7 @@ process GENESPACE_RUN {
     path (MCscanX)
 
     output:
-    tuple val(meta), path("*.tsv")  , emit: dir             , optional: true
+    tuple val(meta), val(haplotypes), path("*.tsv")  , emit: pangenes      , optional: true
     path "versions.yml"             , emit: versions
 
     when:
