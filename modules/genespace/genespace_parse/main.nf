@@ -15,6 +15,7 @@ process GENESPACE_PARSE {
     output:
     tuple val(meta), val(haplotypes), path("*.tsv")  , emit: pangenes
     tuple val(meta), path("*.gff")  , emit: gff
+    tuple val(meta), path("*synteny_150CDS.gff")  , emit: 150gff
     tuple val(meta), path("*exploded*"), emit: syntelogs
     tuple val(meta), path("*.png")  , emit:plots
     path "versions.yml"             , emit: versions

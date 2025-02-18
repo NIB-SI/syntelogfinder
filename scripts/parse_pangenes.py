@@ -204,6 +204,47 @@ def filter_4x_syntelogs(pangenes, filter = '1hap1_1hap2_1hap3_1hap4_synteny'):
     return pangenes
 
 
+def extend_cds_coordinates(gff_df, extension=150):
+    """
+    Add upstream and downstream regions to CDS features in a GFF dataframe.
+    
+    Parameters:
+    gff_df (pandas.DataFrame): GFF dataframe with at least these columns:
+        - type: feature type (e.g., 'CDS')
+        - start: start coordinate
+        - end: end coordinate
+        - strand: strand information ('+' or '-')
+    extension (int): number of base pairs to add upstream and downstream (default: 150)
+    
+    Returns:
+    pandas.DataFrame: Modified copy of input dataframe with extended CDS coordinates
+    """
+    # Create a copy to avoid modifying the original dataframe
+    df = gff_df.copy()
+    
+    # Extend coordinates only for CDS features
+    cds_mask = df['type'] == 'CDS'
+    
+    # For features on the + strand:
+    # - subtract from start (upstream)
+    # - add to end (downstream)
+    plus_strand = cds_mask & (df['strand'] == '+')
+    df.loc[plus_strand, 'start'] = df.loc[plus_strand, 'start'] - extension
+    df.loc[plus_strand, 'end'] = df.loc[plus_strand, 'end'] + extension
+    
+    # For features on the - strand:
+    # - subtract from end (upstream)
+    # - add to start (downstream)
+    minus_strand = cds_mask & (df['strand'] == '-')
+    df.loc[minus_strand, 'start'] = df.loc[minus_strand, 'start'] - extension
+    df.loc[minus_strand, 'end'] = df.loc[minus_strand, 'end'] + extension
+    
+    # Ensure coordinates don't go below 1
+    df.loc[df['start'] < 1, 'start'] = 1
+    
+    return df
+
+
 def add_length_to_syntelogs(pangenes, ref_lengths, attribute):
     # Merge the two dataframes
     df_synt_lengths = pd.merge(pangenes, ref_lengths, on='haplotype_id', how='inner')
@@ -240,10 +281,6 @@ def combine_attributes(row):
     attr_x = row['attributes_x'] if pd.notna(row['attributes_x']) else ''
     new_attr = row['new_attributes'] if pd.notna(row['new_attributes']) else ''
     return attr_x + new_attr
-
-
-
-
 
 
 if __name__ == '__main__':
@@ -297,6 +334,11 @@ if __name__ == '__main__':
 
     # save the dataframe to a tsv file
     gff.to_csv(f'{args.output}_synteny.gff', sep='\t', index=False, header=False)
+
+    # add for each CDS 150 bp upstream and downstream to the start and end coordinates
+    gff_extended = extend_cds_coordinates(gff)
+    # save the dataframe to a tsv file
+    gff_extended.to_csv(f'{args.output}_synteny_150CDS.gff', sep='\t', index=False, header=False)
 
     # filter the 4x syntelogs
     syntelogs = filter_4x_syntelogs(pangenes_pivot)

@@ -19,12 +19,14 @@ include { run_cd_hit } from './modules/CDHit'
 include { run_blastn } from './modules/Blast'
 include { look_at_exact_dups } from './modules/Analysis'
 include { AGAT_spKeepLongestIsoform} from './modules/AGAT/spKeepLongestIsoform'
-include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED; GFFREAD as GFFREAD_CDS }  from './modules/gffread'
+include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED; GFFREAD as GFFREAD_CDS; GFFREAD as GFFREAD_CDS_PLUS_150 }  from './modules/gffread'
 include { SPLIT_HAPLOTYPES } from './modules/Split_haplotypes'
 include { GENESPACE_INPUT_PREPERATION } from './modules/genespace/genespace_input_preperation'
 include { GENESPACE_RUN } from './modules/genespace/genespace_run'
 include { GENESPACE_PARSE } from './modules/genespace/genespace_parse'
-include { CDHIT_CDHITEST } from '/scratch/nadjafn/modules/modules/nf-core/cdhit/cdhitest/'
+include { BLAST_MAKEBLASTDB} from '/scratch/nadjafn/modules/modules/nf-core/blast/makeblastdb'
+include { BLAST_BLASTN} from '/scratch/nadjafn/modules/modules/nf-core/blast/blastn'
+include { CDS_BLAST } from './subworkflows/cds_blast'
 // problem:: task.ext. only applicable to GFFREAD
 // maybe use bed tools to convert gff to bed
 params.reference_fasta = '/scratch/nadjafn/reference/Desiree_v1/De_v1.fa'
@@ -99,11 +101,10 @@ workflow {
     // parse genespace output
     genespace_parse = GENESPACE_PARSE(genespace_run.pangenes.join(agat_output.output_gtf))
 
-    // extract CDS sequences 
-    gffread_cds_output = GFFREAD_CDS(genespace_parse.gff, haplotype_ch.fasta)
+    // Run the subworkflow
+    CDS_BLAST(
+        genespace_parse.150gff, 
+        haplotype_ch.fasta
+    )
 
-
-    gffread_cds_output.gffread_fasta.view()
-    // cluster CDS sequences
-    CDHIT_CDHITEST(gffread_cds_output.gffread_fasta)
 }
