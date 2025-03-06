@@ -2,6 +2,8 @@ import pandas as pd
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from typing import Dict, List
+from pathlib import Path
 
 def parse_blast_fmt6(blast_file):
     """
@@ -18,6 +20,9 @@ def filter_blast(blast_df):
     # remove rows where query and subject are the same
     blast_df = blast_df[blast_df['query'] != blast_df['subject']]
 
+def filter_blast(blast_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Filter BLAST results to remove self-matches.
     
 
     return blast_df
