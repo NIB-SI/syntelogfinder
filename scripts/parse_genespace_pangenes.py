@@ -180,7 +180,6 @@ def generate_combined_plots(df_list: List[pd.DataFrame], attributes: List[str], 
 
     # Loop through attributes and create a plot for each
     for i, (df, attribute) in enumerate(zip(df_list, attributes)):
-        print(df)
         make_barplot(df, attribute, axes[i], get_haplotype_labels(df))
         if i > 0:
             axes[i].legend_.remove()  # Remove individual legends
@@ -255,7 +254,6 @@ def add_synteny_category(pangenes: pd.DataFrame) -> pd.DataFrame:
     synteny_category_parts = [pangenes[f'{hap}_count'] for hap in haplotype_cols]
     synteny_category_parts = pd.DataFrame(synteny_category_parts).T  # Transpose to get correct column format
     pangenes['synteny_category'] = synteny_category_parts.astype(str).agg('_'.join, axis=1) + '_' + pangenes['true_synteny']
-    print(pangenes['synteny_category'])
     # Create clean copy without special characters
     pangenes_gene = pangenes.map(lambda x: x.replace("+", "").replace("*", "") if isinstance(x, str) else x)
     
@@ -621,21 +619,28 @@ def main():
         pangenes_pivot = pd.merge(
             pangenes_pivot, 
             syntelogs_lengths_list[1],  # CDS info is at index 1
-            on=['Synt_id'], 
-            how='inner'
+            on=['transcript_id'], 
+            how='left'
         )
 
         # Set transcript ID as index
-        pangenes_pivot.set_index('transcript_id_x', inplace=True)
+        pangenes_pivot.set_index('transcript_id', inplace=True)
 
         # Select relevant columns for output
         final_output = pangenes_pivot[[
-            'Synt_id', 'synteny_category', 'syntenic_genes', 'haplotype', 
+            'Synt_id_x', 'synteny_category', 'syntenic_genes', 'haplotype', 
             'CDS_length_category', 'CDS_percent_difference', 'CDS_haplotype_with_longest_annotation'
         ]]
 
+        final_output.rename(columns={'Synt_id_x': 'Synt_id'}, inplace=True)
+        # print duplicated rows
+        print(final_output[final_output.duplicated()])
+        # drop duplicated rows
+        final_output = final_output.drop_duplicates()
+        # print rows where transcript_id is duplicated
+        print(final_output[final_output.index.duplicated()])
         # Save to TSV file
-        final_output.to_csv(f'{args.output}_genespacecats_lengthcats.tsv', sep='\t', index=True)
+        final_output.to_csv(f'{args.output}_categories.tsv', sep='\t', index=True)
     
     print("Analysis complete!")
 

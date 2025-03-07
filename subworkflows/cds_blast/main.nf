@@ -1,4 +1,4 @@
-include { GFFREAD as GFFREAD_CDS}  from '../../modules/gffread' 
+include { GFFREAD as GFFREAD_CDS}  from '../../modules/local/gffread' 
 include { BLAST_MAKEBLASTDB} from '/scratch/nadjafn/modules/modules/nf-core/blast/makeblastdb'
 include { BLAST_BLASTN} from '/scratch/nadjafn/modules/modules/nf-core/blast/blastn'
 
