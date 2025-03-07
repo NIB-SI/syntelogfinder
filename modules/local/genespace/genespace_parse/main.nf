@@ -21,14 +21,14 @@ process GENESPACE_PARSE {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}_genespace"
-    def haplotypes_arg = haplotypes.join('_') + '_synteny'
+    def haplotypes_arg = haplotypes.join('_') + '_synteny' // TODO: results in hap1_hap2_hap4_hap3_synteny, but we need 1hap1_1hap2_1hap4_1hap3_synteny 
 
     """
-    python $projectDir/bin/parse_genespace_pangenes.py \\
+    python $projectDir/scripts/parse_genespace_pangenes.py \\
         --pangenes $pangenes \\
         --gff $gff \\
         --output ${prefix} \\
-        -s ${haplotypes_arg} \\
+        -s 1hap1_1hap2_1hap3_1hap4_synteny \\
         $args
 
     cat <<-END_VERSIONS > versions.yml
@@ -48,7 +48,7 @@ process GENESPACE_PARSE {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-        parse_genespace_pangenes: \$(python $projectDir/bin/parse_genespace_pangenes.py --version 2>&1 | sed 's/parse_genespace_pangenes.py //g')
+        parse_genespace_pangenes: \$(python $projectDir/scripts/parse_genespace_pangenes.py --version 2>&1 | sed 's/parse_genespace_pangenes.py //g')
     END_VERSIONS
     """
 }

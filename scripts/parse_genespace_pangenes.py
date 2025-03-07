@@ -9,6 +9,9 @@ import os
 from typing import Dict, List, Tuple, Union, Callable
 
 
+# Issue: Some transcripts get multiple synt categories then in the final output they will be duplicated
+# Maybe drop these duplicates in the beginning?
+
 def parse_pangenes(pangenes_file: str) -> pd.DataFrame:
     """Parse the tab-separated pangenes file.
     
@@ -272,7 +275,11 @@ def add_synteny_category(pangenes: pd.DataFrame) -> pd.DataFrame:
     )
     
     # Drop rows where transcript_id is NaN
-    pangenes_pivot = pangenes_pivot.dropna(subset=['transcript_id'])
+    pangenes_pivot = pangenes_pivot.dropna(subset='transcript_id')
+
+    # drop duplicated rows
+    pangenes_pivot = pangenes_pivot.drop_duplicates(['transcript_id', 'synteny_category'])
+
     
     # Split comma-separated transcript IDs and expand the DataFrame
     pangenes_pivot['transcript_id'] = pangenes_pivot['transcript_id'].str.split(',')
@@ -571,7 +578,7 @@ def main():
     # Determine ploidy level
     haplotype_cols = get_haplotype_columns(pangenes)
     ploidy = len(haplotype_cols)
-    print(f"Detected ploidy level: {ploidy}x (haplotype columns: {', '.join(haplotype_cols)})")
+    print(f"Detected ploidy level: {ploidy}x (haplotype columns: {','.join(haplotype_cols)})")
 
     # Generate synteny categories
     print("Adding synteny categories...")
@@ -602,30 +609,29 @@ def main():
         # Add length information to syntelogs
         syntelogs_lengths = add_length_to_syntelogs(syntelogs, ref_lengths, attribute)
         
-        # Convert transcript ID lists to strings
-        syntelogs_lengths['transcript_id'] = syntelogs_lengths['transcript_id'].apply(
-            lambda x: ','.join(map(str, x)) if isinstance(x, list) else str(x)
-        )
-        
         syntelogs_lengths_list.append(syntelogs_lengths)
     
     # Generate combined plots
     print("Generating combined plots...")
     generate_combined_plots(syntelogs_lengths_list, attributes, args.output)
-
+    # explode
+    syntelogs_lengths_cds = syntelogs_lengths_list[1].explode('transcript_id')
+    # drop duplicated rows
+    syntelogs_lengths_cds = syntelogs_lengths_cds.drop_duplicates('transcript_id')
     # Merge transcript information with length categories
     print("Merging and saving final output...")
+    print(syntelogs_lengths_cds['transcript_id'])
     if len(syntelogs_lengths_list) > 1:  # Check if we have CDS info
         pangenes_pivot = pd.merge(
             pangenes_pivot, 
-            syntelogs_lengths_list[1],  # CDS info is at index 1
-            on=['transcript_id'], 
+            syntelogs_lengths_cds,  # CDS info is at index 1
+            on='transcript_id', 
             how='left'
         )
 
         # Set transcript ID as index
         pangenes_pivot.set_index('transcript_id', inplace=True)
-
+        
         # Select relevant columns for output
         final_output = pangenes_pivot[[
             'Synt_id_x', 'synteny_category', 'syntenic_genes', 'haplotype', 

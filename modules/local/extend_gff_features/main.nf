@@ -24,7 +24,7 @@ process EXTEND_GFF_FEATURES {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    extend_gff_features.py \\
+    python $projectDir/scripts/extend_gff_features.py \\
         --gff $gff \\
         --fasta $fasta \\
         --feature-type CDS \\

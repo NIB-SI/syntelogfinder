@@ -1,82 +1,147 @@
+#!/usr/bin/env python3
+"""
+Syntenic Gene Analysis Tool
+
+This script analyzes BLAST results and syntenic genes to identify allelic relationships
+between haplotypes. It categorizes syntenic groups based on sequence identity patterns
+and visualizes the distribution of SNPs and allelic categories.
+"""
+
+# PROBLEM: Number of unique syntenic IDs: 9604 TOOOO High, some duplication!!
 import pandas as pd
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from pathlib import Path
+
+
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description='Analyze BLAST results and syntenic genes')
+    parser.add_argument('-b', '--blast', help='BLAST all-vs-all output file (fmt6)', required=True)
+    parser.add_argument('-s', '--syntenic_genes', help='TSV file with syntenic genes', required=True)
+    parser.add_argument('-o', '--output_prefix', help='Prefix for output files', required=True)
+    
+    return parser.parse_args()
+
 
 def parse_blast_fmt6(blast_file: str) -> pd.DataFrame:
     """
-    Parse BLAST output file in format 6 into a pandas DataFrame.
+    Parse BLAST output file in tabular format 6 into a pandas DataFrame.
+    
+    Args:
+        blast_file: Path to BLAST output file
+        
+    Returns:
+        DataFrame with parsed BLAST results
     """
-    columns = ['query', 'subject', 'identity', 'length', 'mismatch', 'gap',
-               'q_start', 'q_end', 's_start', 's_end', 'evalue', 'bitscore']
-   
-    return pd.read_csv(blast_file, sep='\t', header=None, names=columns)
+    columns = [
+        'query', 'subject', 'identity', 'length', 'mismatch', 'gap',
+        'q_start', 'q_end', 's_start', 's_end', 'evalue', 'bitscore'
+    ]
+    
+    df = pd.read_csv(blast_file, sep='\t', header=None, names=columns)
+    
+    # Remove self-matches (same query and subject)
+    df = df[df['query'] != df['subject']]
+    # remove duplicated query subject pairs
+    df = df.drop_duplicates(subset=['query', 'subject'])
+    
+    return df
 
-def filter_blast(blast_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Filter BLAST results to remove self-matches.
 
+def load_syntelogs(syntelogs_file: str) -> pd.DataFrame:
     """
-    return blast_df[blast_df['query'] != blast_df['subject']]
-
-def process_syntelogs(syntelogs_file: str) -> pd.DataFrame:
-    """
-    Process syntelogs file and prepare for analysis.
+    Load and prepare syntelogs data for analysis.
     
     Args:
         syntelogs_file: Path to syntelogs TSV file
         
     Returns:
-        Processed syntelogs DataFrame
+        Processed syntelogs DataFrame with equal-length entries only
     """
+    # Load syntelogs data
     syntelogs = pd.read_csv(
         syntelogs_file,
         sep='\t',
-        usecols=['Synt_id', 'haplotype_id', 'CDS_haplotype_with_longest_annotation']
+        usecols=['transcript_id', 'Synt_id', 'CDS_haplotype_with_longest_annotation']
     )
     
-    return syntelogs
-
-def filter_same_length_syntelogs(syntelogs: pd.DataFrame) -> pd.DataFrame:
-    """
-    Filter syntelogs for equal lengths and extract haplotype information.
-    
-    Args:
-        syntelogs: DataFrame containing syntelogs data
-    """
     # Filter for equal lengths and extract haplotype information
     syntelogs = syntelogs[syntelogs['CDS_haplotype_with_longest_annotation'] == 'equal_lengths']
-    syntelogs['haplotype'] = syntelogs['haplotype_id'].str.extract(r'(H\d+)')
-
+    # drop duplicated transcript_id
+    syntelogs = syntelogs.drop_duplicates(subset='transcript_id')
+    syntelogs['haplotype'] = syntelogs['transcript_id'].str.extract(r'(H\d+)')
+    print(syntelogs)
     return syntelogs
 
-def create_mismatch_categories(df: pd.DataFrame) -> pd.DataFrame:
+
+def merge_blast_with_syntelogs(blast_df: pd.DataFrame, syntelogs: pd.DataFrame) -> pd.DataFrame:
     """
-    Create mismatch categories based on identity and mismatch values.
+    Merge BLAST results with syntelog information to identify relationships.
     
     Args:
-        df: DataFrame containing identity and mismatch columns
+        blast_df: DataFrame with BLAST results
+        syntelogs: DataFrame with syntelog information
         
     Returns:
-        DataFrame with added mismatch categories
+        Merged DataFrame with BLAST and syntelog information
     """
-    df['mismatch_category'] = np.where(
-        (df['identity'] == 100.000) & (df['mismatch'] == 0),
+    # Merge BLAST results with syntelogs
+    merged = pd.merge(blast_df, syntelogs, left_on='query', right_on='transcript_id', how='inner')
+    merged = pd.merge(merged, syntelogs, left_on='subject', right_on='transcript_id', how='inner', 
+                      suffixes=('_x', '_y'))
+    
+    # Keep only pairs from the same syntenic group
+    merged = merged[merged['Synt_id_x'] == merged['Synt_id_y']]
+    
+    # Create sorted haplotype combinations
+    merged['haplotype_comb'] = merged[['haplotype_x', 'haplotype_y']].apply(
+        lambda x: '-'.join(sorted(x)), axis=1
+    )
+    
+    # Select relevant columns and remove duplicates
+    merged = merged[[
+        'haplotype_comb', 'Synt_id_x', 'identity', 'mismatch', 
+        'CDS_haplotype_with_longest_annotation_x', 'query'
+    ]]
+    
+    # Sort by identity and mismatch, then remove duplicates
+    merged = (merged.sort_values(by=['identity', 'mismatch'])
+              .drop_duplicates(['haplotype_comb', 'Synt_id_x'], keep='first'))
+    
+    return merged
+
+
+def categorize_sequence_similarity(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Categorize sequence similarity based on identity and mismatch patterns.
+    
+    Args:
+        df: DataFrame with merged BLAST and syntelog data
+        
+    Returns:
+        Tuple containing:
+            1. DataFrame with sequence similarity categories
+            2. DataFrame with identity match statistics
+    """
+    # Group by syntelogs and sequence similarity metrics
+    grouped = (df.groupby(['Synt_id_x', 'identity', 'mismatch'])
+               .size()
+               .reset_index(name='counts_of_identical_combinations'))
+    
+    # Categorize as identical or SNP-containing
+    grouped['mismatch_category'] = np.where(
+        (grouped['identity'] == 100.000) & (grouped['mismatch'] == 0),
         'identical',
         'SNPs'
     )
-    return df
-
-def add_missing_identical_rows(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Some Synt_ids dont have identical matches, so  add a row with 0 mismatch and 100% identity
-    and count 0.
-    """
+    
+    # Add rows for Synt_ids with no identical matches
     new_rows = []
-    for synt_id in df['Synt_id_x'].unique():
-        if 'identical' not in df[df['Synt_id_x'] == synt_id]['mismatch_category'].values:
+    for synt_id in grouped['Synt_id_x'].unique():
+        if 'identical' not in grouped[grouped['Synt_id_x'] == synt_id]['mismatch_category'].values:
             new_rows.append({
                 'Synt_id_x': synt_id,
                 'identity': 100.000,
@@ -86,20 +151,25 @@ def add_missing_identical_rows(df: pd.DataFrame) -> pd.DataFrame:
             })
     
     if new_rows:
-        return pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True)
-    return df
+        grouped = pd.concat([grouped, pd.DataFrame(new_rows)], ignore_index=True)
+    
+    # Extract identical matches
+    identical_matches = grouped[grouped['mismatch_category'] == 'identical'].sort_values(by='Synt_id_x')
+    
+    return grouped, identical_matches
 
-def categorize_counts(df: pd.DataFrame) -> pd.DataFrame:
+
+def assign_allele_categories(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Based on the frequency of identical matche combination per Synt_id,
-    add the corresponding category, as this is not intuitive from the counts.
+    Assign allele categories based on the number of identical combinations.
     
     Args:
-        df: DataFrame to categorize
+        df: DataFrame with identical match counts
         
     Returns:
-        DataFrame with added categories
+        DataFrame with allele categories
     """
+    # Map counts to meaningful categories
     category_map = {
         0: 'all_alleles_different',
         1: '2_alleles_identical',
@@ -110,118 +180,122 @@ def categorize_counts(df: pd.DataFrame) -> pd.DataFrame:
     
     df['category'] = 'no_cat'
     for count, category in category_map.items():
-        df['category'] = np.where(
-            df['counts_of_identical_combinations'] == count,
-            category,
-            df['category']
-        )
-    # remove rows with no category as this is some BLAST error
+        df.loc[df['counts_of_identical_combinations'] == count, 'category'] = category
+    
+    # Remove rows with undefined categories
     df = df[df['category'] != 'no_cat']
+    
     return df
 
-def plot_haplotype_histogram(df: pd.DataFrame, output_path: str) -> None:
-    """
-    Create and save haplotype histogram plot.
-    
-    Args:
-        df: DataFrame containing haplotype data
-        output_path: Path to save the plot
-    """
-    df.plot(kind='bar', x='category', y='counts_per_synt_id')
-    plt.tight_layout()
-    plt.savefig(output_path)
-    plt.close()
 
-def plot_snp_histogram(df: pd.DataFrame, output_path: str) -> None:
+def create_visualizations(data: Dict[str, pd.DataFrame], output_prefix: str) -> None:
     """
-    Create and save SNP histogram plot.
+    Create and save visualizations based on the analysis results.
     
     Args:
-        df: DataFrame containing SNP data
-        output_path: Path to save the plot
+        data: Dictionary containing analysis DataFrames
+        output_prefix: Prefix for output files
     """
-    df['mismatch'] = df['mismatch'].astype(int)
-    counts_mismatches = df['mismatch'].value_counts()
-    counts_mismatches.plot(kind='hist', bins=100)
-    plt.xlabel('Number of SNPs')
-    plt.ylabel('Counts')
-    plt.title('Number of SNPs per Syntenic ID')
+    # Plot allele category histogram
+    identity_stats = data['identity_stats'].copy()
+    identity_stats.plot(kind='bar', x='category', y='counts_per_synt_id')
+    plt.title('Distribution of Allelic Categories')
+    plt.xlabel('Allelic Category')
+    plt.ylabel('Number of Syntenic Groups')
     plt.tight_layout()
-    plt.savefig(output_path)
+    plt.savefig(f'{output_prefix}_allele_categories.png', dpi=300)
     plt.close()
+    
+    # Plot SNP histogram
+    snps_df = data['merged_with_categories'][
+        data['merged_with_categories']['category'].notna() & 
+        (data['similarity_data']['mismatch_category'] == 'SNPs')
+    ]
+    
+    if not snps_df.empty:
+        snps_df['mismatch'] = snps_df['mismatch'].astype(int)
+        plt.figure(figsize=(10, 6))
+        plt.hist(snps_df['mismatch'], bins=50, alpha=0.75)
+        plt.xlabel('Number of SNPs')
+        plt.ylabel('Frequency')
+        plt.title('Distribution of SNPs in Syntenic Genes')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(f'{output_prefix}_SNP_distribution.png', dpi=300)
+        plt.close()
+
 
 def main():
-    parser = argparse.ArgumentParser(description='Analyze BLAST results and syntenic genes')
-    parser.add_argument('-b', '--blast', help='The blast all-vs-all', required=True)
-    parser.add_argument('-s', '--synthenic_genes', help='Tsv file with syntenic genes', required=True)
-    parser.add_argument('-o', '--output_prefix', help='Prefix for output files', required=True)
+    """Main function to execute the analysis workflow."""
+    # Parse command line arguments
+    args = parse_arguments()
     
-    args = parser.parse_args()
+    print("=== Syntenic Gene Analysis ===")
+    print(f"BLAST file: {args.blast}")
+    print(f"Syntelogs file: {args.syntenic_genes}")
+    print(f"Output prefix: {args.output_prefix}")
+    print("-----------------------------")
     
-    
-    
-    # Process BLAST results
+    # Step 1: Parse BLAST results
+    print("Parsing BLAST results...")
     blast_df = parse_blast_fmt6(args.blast)
-    filtered_blast = filter_blast(blast_df)
+    print(f"Found {len(blast_df)} BLAST alignments after filtering self-matches")
     
-    # Process syntelogs
-    syntelogs_all = process_syntelogs(args.synthenic_genes)
-    syntelogs_same_length = filter_same_length_syntelogs(syntelogs_all)
+    # Step 2: Load syntelogs data
+    print("Loading syntelogs data...")
+    syntelogs = load_syntelogs(args.syntenic_genes)
+    print(f"Found {len(syntelogs)} syntelog entries with equal CDS lengths")
     
-    # Merge data
-    merged = pd.merge(filtered_blast, syntelogs, left_on='query', right_on='haplotype_id', how='inner')
-    merged2 = pd.merge(merged, syntelogs, left_on='subject', right_on='haplotype_id', how='inner')
-    merged2 = merged2[merged2['Synt_id_x'] == merged2['Synt_id_y']]
+    # Step 3: Merge BLAST results with syntelogs
+    print("Merging BLAST results with syntelogs...")
+    print(blast_df)
+    print(syntelogs)
+    merged_data = merge_blast_with_syntelogs(blast_df, syntelogs)
+    print(f"Number of unique syntenic IDs: {len(merged_data['Synt_id_x'].unique())}")
     
-    print(f"Number of unique syntenic IDs: {len(merged2['Synt_id_x'].unique())}")
+    # Step 4: Categorize sequence similarity
+    print("Categorizing sequence similarity...")
+    similarity_data, identical_matches = categorize_sequence_similarity(merged_data)
     
-    # Create haplotype combinations
-    merged2['haplotype_comb'] = merged2[['haplotype_x', 'haplotype_y']].apply(
-        lambda x: '-'.join(sorted(x)), axis=1
+    # Step 5: Assign allele categories
+    print("Assigning allele categories...")
+    categorized_identical = assign_allele_categories(identical_matches)
+    
+    # Step 6: Add categories to the main dataset
+    merged_with_categories = pd.merge(
+        merged_data, 
+        categorized_identical[['Synt_id_x', 'category']], 
+        on='Synt_id_x', 
+        how='left'
     )
+    # drop duplicated query
+    merged_with_categories = merged_with_categories.drop_duplicates(subset='query')
     
+    # Select and output relevant columns
+    output_data = merged_with_categories[[
+        'query', 'mismatch', 'Synt_id_x', 
+        'CDS_haplotype_with_longest_annotation_x', 'category'
+    ]]
+    
+    output_path = f'{args.output_prefix}_syntelog_blast_analysis.tsv'
+    print(f"Writing full results to {output_path}")
+    output_data.to_csv(output_path, sep='\t', index=False)
+    
+    # Prepare data for visualizations
+    identity_group_stats = (categorized_identical.groupby(['counts_of_identical_combinations', 'category'])
+                           .size()
+                           .reset_index(name='counts_per_synt_id'))
+    
+    # Step 7: Create visualizations
+    print("Creating visualizations...")
+    create_visualizations({
+        'similarity_data': similarity_data,
+        'merged_with_categories': merged_with_categories,
+        'identity_stats': identity_group_stats
+    }, args.output_prefix)
+    
+    print("Analysis complete!")
 
-    # Process for analysis
-    merged2 = merged2[['haplotype_comb', 'Synt_id_x', 'identity', 'mismatch', 'CDS_haplotype_with_longest_annotation_x', 'query']]
-    merged2 = (merged2.sort_values(by=['identity', 'mismatch'])
-               .drop_duplicates(['haplotype_comb', 'Synt_id_x'], keep='first'))
-    
-    # Group and categorize
-    merged2_group = (merged2.groupby(['Synt_id_x', 'identity', 'mismatch'])
-               .size()
-               .reset_index(name='counts_of_identical_combinations'))
-    
-    merged2_group = create_mismatch_categories(merged2_group)
-    merged2_group = add_missing_identical_rows(merged2_group)
-    merged2_group = merged2_group.sort_values(by='Synt_id_x')
-    print(merged2_group)
-    # Process identical matches
-    merged2_ident = merged2_group[merged2_group['mismatch_category'] == 'identical']
-    merged2_ident2 = categorize_counts(merged2_ident)
-    # add the category to the exploded table
-    merged2 = pd.merge(merged2, merged2_ident2[['Synt_id_x', 'category']], on='Synt_id_x', how='left')
-    # only keep query mismatch Synt_id_x, CDS_haplotype_with_longest_annotation_x, category
-    merged2 = merged2[['query','mismatch','Synt_id_x', 'CDS_haplotype_with_longest_annotation_x', 'category']]
-    # Save full results
-    output_path = f'{args.output_prefix}_De_v1.functional_annotations_nodigits_genespace_syntelogs_all_exploded_blast.tsv'
-    merged2.to_csv(output_path, sep='\t', index=False)
-    
-    merged2_ident = (merged2_ident.groupby(['counts_of_identical_combinations', 'mismatch'])
-                    .size()
-                    .reset_index(name='counts_per_synt_id'))
-    
-    merged2_ident = categorize_counts(merged2_ident)
-    
-    # Create plots
-    plot_haplotype_histogram(merged2_ident,f'{args.output_prefix}_haplotype_histogram.png')
-    
-    # Process and plot SNPs
-    merged2_SNPs = merged2[merged2['mismatch_category'] == 'SNPs']
-    plot_snp_histogram(merged2_SNPs, f'{args.output_prefix}_SNP_histogram.png')
 
 if __name__ == '__main__':
     main()
-
-
-
-    # python /scratch/nadjafn/potato-allelic-orthogroups/scripts/CDS_similarity_BLAST.py -b results/06_BLAST/De_v1.functional_annotations_nodigits.txt -s results/03_GENESPACE/De_v1.functional_annotations_nodigits_genespace_syntelogs_all_exploded.tsv  -o test
