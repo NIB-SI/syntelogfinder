@@ -19,13 +19,11 @@ include { run_cd_hit } from './modules/CDHit'
 include { run_blastn } from './modules/Blast'
 include { look_at_exact_dups } from './modules/Analysis'
 include { AGAT_spKeepLongestIsoform} from './modules/AGAT/spKeepLongestIsoform'
-include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED; GFFREAD as GFFREAD_CDS; GFFREAD as GFFREAD_CDS_PLUS_150 }  from './modules/gffread'
+include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED}  from './modules/gffread'
 include { SPLIT_HAPLOTYPES } from './modules/Split_haplotypes'
 include { GENESPACE_INPUT_PREPERATION } from './modules/genespace/genespace_input_preperation'
 include { GENESPACE_RUN } from './modules/genespace/genespace_run'
 include { GENESPACE_PARSE } from './modules/genespace/genespace_parse'
-include { BLAST_MAKEBLASTDB} from '/scratch/nadjafn/modules/modules/nf-core/blast/makeblastdb'
-include { BLAST_BLASTN} from '/scratch/nadjafn/modules/modules/nf-core/blast/blastn'
 include { CDS_BLAST } from './subworkflows/cds_blast'
 // problem:: task.ext. only applicable to GFFREAD
 // maybe use bed tools to convert gff to bed
@@ -99,11 +97,11 @@ workflow {
     genespace_run = GENESPACE_RUN(genespace_input.dir, params.mcscanx_path)
 
     // parse genespace output
-    genespace_parse = GENESPACE_PARSE(genespace_run.pangenes.join(agat_output.output_gtf))
+    genespace_parse = GENESPACE_PARSE(genespace_run.pangenes.join(agat_output.output_gtf), 300)
 
     // Run the subworkflow
     CDS_BLAST(
-        genespace_parse.150gff, 
+        genespace_parse.plusgff,
         haplotype_ch.fasta
     )
 

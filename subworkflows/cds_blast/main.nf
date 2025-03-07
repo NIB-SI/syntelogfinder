@@ -1,3 +1,8 @@
+include { GFFREAD as GFFREAD_CDS}  from '../../modules/gffread' 
+include { BLAST_MAKEBLASTDB} from '/scratch/nadjafn/modules/modules/nf-core/blast/makeblastdb'
+include { BLAST_BLASTN} from '/scratch/nadjafn/modules/modules/nf-core/blast/blastn'
+
+
 workflow CDS_BLAST {
     take:
         gff             // GFF file from genespace parse
@@ -24,5 +29,5 @@ workflow CDS_BLAST {
     emit:
         cds_fasta = gffread_out.gffread_fasta
         blast_db  = blast_db.db
-        results   = blast_results
+        results   = blast_results.txt
 }
