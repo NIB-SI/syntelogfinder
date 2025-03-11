@@ -4,7 +4,7 @@ nextflow.enable.dsl = 2
 
 // Log pipeline information
 log.info """
-         Syntleog P I P E L I N E    
+         Syntelog P I P E L I N E    
          ===================================
          """
          .stripIndent()
@@ -13,11 +13,10 @@ log.info """
 include { AGAT_spKeepLongestIsoform } from './modules/local/AGAT/spKeepLongestIsoform'
 include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED } from './modules/local/gffread'
 include { SPLIT_HAPLOTYPES } from './modules/local/Split_haplotypes'
-include { GENESPACE_INPUT_PREPERATION } from './modules/local/genespace/genespace_input_preperation'
-include { GENESPACE_RUN } from './modules/local/genespace/genespace_run'
-include { GENESPACE_PARSE } from './modules/local/genespace/genespace_parse'
+include { GENESPACE_ANALYSIS } from './subworkflows/genespace_analysis'
 include { EXTEND_GFF_FEATURES } from './modules/local/extend_gff_features'
 include { CDS_BLAST } from './subworkflows/cds_blast'
+include { SYNTELOG_SIMILARITY } from './modules/local/Syntelog_similarity'
 
 // Define pipeline parameters
 
@@ -74,20 +73,24 @@ workflow {
             by: [0, 1]
         )
         .groupTuple(by: 0)
+    agat_output.output_gtf.view()
+    // GENESPACE Analysis
+    genespace_ch = GENESPACE_ANALYSIS(gffread_output, params.mcscanx_path, agat_output.output_gtf)
 
-    genespace_input = GENESPACE_INPUT_PREPERATION(gffread_output)
-
-    // Run GENESPACE
-    genespace_run = GENESPACE_RUN(genespace_input.dir, params.mcscanx_path)
-
-    // Parse GENESPACE output
-    genespace_parse = GENESPACE_PARSE(genespace_run.pangenes.join(agat_output.output_gtf))
 
     // Extend GFF features
     extended_gff = EXTEND_GFF_FEATURES(agat_output.output_gtf, fasta_ch)
 
     // Run CDS BLAST subworkflow
-    CDS_BLAST(extended_gff.gff, haplotype_ch.map{it.fasta})
+    blast_ch = CDS_BLAST(extended_gff.gff, haplotype_ch.map{it.fasta})
+
+    blast_ch.results.view()
+    genespace_ch.view()
+
+    SYNTELOG_SIMILARITY(
+        genespace_ch,
+        blast_ch.results
+    )
 }
 
 // Function to check if required parameters are set

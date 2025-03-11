@@ -7,7 +7,6 @@ between haplotypes. It categorizes syntenic groups based on sequence identity pa
 and visualizes the distribution of SNPs and allelic categories.
 """
 
-# PROBLEM: Number of unique syntenic IDs: 9604 TOOOO High, some duplication!!
 import pandas as pd
 import argparse
 import numpy as np
@@ -65,14 +64,18 @@ def load_syntelogs(syntelogs_file: str) -> pd.DataFrame:
     syntelogs = pd.read_csv(
         syntelogs_file,
         sep='\t',
-        usecols=['transcript_id', 'Synt_id', 'CDS_haplotype_with_longest_annotation']
+        usecols=['transcript_id', 'Synt_id', 'synteny_category', 'CDS_haplotype_with_longest_annotation', 'haplotype', 'CDS_length_category']
     )
-    
+    return syntelogs
+
+def filter_syntelogs(syntelogs: pd.DataFrame) -> pd.DataFrame:
+    """
+    Filter syntelogs for equal lengths and extract haplotype information.
+    """ 
     # Filter for equal lengths and extract haplotype information
     syntelogs = syntelogs[syntelogs['CDS_haplotype_with_longest_annotation'] == 'equal_lengths']
     # drop duplicated transcript_id
     syntelogs = syntelogs.drop_duplicates(subset='transcript_id')
-    syntelogs['haplotype'] = syntelogs['transcript_id'].str.extract(r'(H\d+)')
     print(syntelogs)
     return syntelogs
 
@@ -104,7 +107,7 @@ def merge_blast_with_syntelogs(blast_df: pd.DataFrame, syntelogs: pd.DataFrame) 
     # Select relevant columns and remove duplicates
     merged = merged[[
         'haplotype_comb', 'Synt_id_x', 'identity', 'mismatch', 
-        'CDS_haplotype_with_longest_annotation_x', 'query'
+        'CDS_haplotype_with_longest_annotation_x', 'CDS_length_category_x', 'query'
     ]]
     
     # Sort by identity and mismatch, then remove duplicates
@@ -207,10 +210,9 @@ def create_visualizations(data: Dict[str, pd.DataFrame], output_prefix: str) -> 
     plt.close()
     
     # Plot SNP histogram
-    snps_df = data['merged_with_categories'][
-        data['merged_with_categories']['category'].notna() & 
-        (data['similarity_data']['mismatch_category'] == 'SNPs')
-    ]
+    snps_df = data['merged_with_categories'][data['merged_with_categories']['mismatch_category'] == 'SNPs']
+
+    print(snps_df)
     
     if not snps_df.empty:
         snps_df['mismatch'] = snps_df['mismatch'].astype(int)
@@ -244,13 +246,13 @@ def main():
     # Step 2: Load syntelogs data
     print("Loading syntelogs data...")
     syntelogs = load_syntelogs(args.syntenic_genes)
+    filtered_syntelogs = filter_syntelogs(syntelogs)
     print(f"Found {len(syntelogs)} syntelog entries with equal CDS lengths")
     
     # Step 3: Merge BLAST results with syntelogs
     print("Merging BLAST results with syntelogs...")
-    print(blast_df)
-    print(syntelogs)
-    merged_data = merge_blast_with_syntelogs(blast_df, syntelogs)
+
+    merged_data = merge_blast_with_syntelogs(blast_df, filtered_syntelogs)
     print(f"Number of unique syntenic IDs: {len(merged_data['Synt_id_x'].unique())}")
     
     # Step 4: Categorize sequence similarity
@@ -263,18 +265,21 @@ def main():
     
     # Step 6: Add categories to the main dataset
     merged_with_categories = pd.merge(
-        merged_data, 
-        categorized_identical[['Synt_id_x', 'category']], 
-        on='Synt_id_x', 
+        syntelogs, 
+        similarity_data[['Synt_id_x', 'mismatch_category', 'mismatch']],
+        left_on ='Synt_id',
+        right_on='Synt_id_x',
         how='left'
     )
+    print(merged_with_categories)
+    print(merged_with_categories.columns)
     # drop duplicated query
-    merged_with_categories = merged_with_categories.drop_duplicates(subset='query')
+    merged_with_categories = merged_with_categories.drop_duplicates(subset='transcript_id')
     
     # Select and output relevant columns
     output_data = merged_with_categories[[
-        'query', 'mismatch', 'Synt_id_x', 
-        'CDS_haplotype_with_longest_annotation_x', 'category'
+        'transcript_id', 'Synt_id',   'synteny_category',
+        'CDS_haplotype_with_longest_annotation', 'CDS_length_category', 'mismatch_category', 'mismatch'
     ]]
     
     output_path = f'{args.output_prefix}_syntelog_blast_analysis.tsv'
@@ -285,7 +290,7 @@ def main():
     identity_group_stats = (categorized_identical.groupby(['counts_of_identical_combinations', 'category'])
                            .size()
                            .reset_index(name='counts_per_synt_id'))
-    
+    print(categorized_identical)
     # Step 7: Create visualizations
     print("Creating visualizations...")
     create_visualizations({

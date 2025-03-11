@@ -1,4 +1,6 @@
-process GENESPACE_PARSE {
+#!/usr/bin/env nextflow
+
+process SYNTELOG_SIMILARITY {
     tag "$meta.id"
     label 'process_low'
 
@@ -7,10 +9,11 @@ process GENESPACE_PARSE {
         'oras://community.wave.seqera.io/library/pandas_python_pip_argpar_pruned:72e2ed5052546765':
         'biocontainers/gffread:0.12.7--hdcf5f25_4' }"
     input:
-    tuple val(meta), val(haplotypes), path(pangenes), path(gff)
+    tuple val(meta), val(haplotypes), path(pangenes)
+    tuple val(meta), path(blast_file)
 
     output:
-    tuple val(meta), val(haplotypes), path("${prefix}_categories.tsv"), emit: pangenes
+    tuple val(meta), val(haplotypes), path("${prefix}_blast*.tsv"), emit: blast_pangenes
     tuple val(meta), path("${prefix}*.png"), emit: plots
     path "versions.yml", emit: versions
 
@@ -19,25 +22,25 @@ process GENESPACE_PARSE {
 
     script:
     def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}_genespace"
-    def haplotypes_arg = haplotypes.sort().collect { "1${it}" }.join('_') + '_synteny'
+    prefix = task.ext.prefix ?: "${meta.id}_blast"
+    
 
     """
-    python $projectDir/scripts/parse_genespace_pangenes.py \\
-        --pangenes $pangenes \\
-        --gff $gff \\
+    python $projectDir/scripts/CDS_similarity_BLAST.py \\
+        --blast ${blast_file} \\
+        --syntenic_genes ${pangenes} \\
         --output ${prefix} \\
-        -s $haplotypes_arg \\
         $args
-    echo "echo!!?!?"
+
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-        parse_genespace_pangenes: \$(python $projectDir/bin/parse_genespace_pangenes.py --version 2>&1 | sed 's/parse_genespace_pangenes.py //g')
+        CDS_similarity_BLAST: \$(python $projectDir/bin/CDS_similarity_BLAST.py --version 2>&1 | sed 's/CDS_similarity_BLAST.py //g')
     END_VERSIONS
     """
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}_genespace"
+    prefix = task.ext.prefix ?: "${meta.id}_blast"
     """
     touch ${prefix}.tsv
     touch ${prefix}_plot1.png
@@ -46,7 +49,7 @@ process GENESPACE_PARSE {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-        parse_genespace_pangenes: \$(python $projectDir/scripts/parse_genespace_pangenes.py --version 2>&1 | sed 's/parse_genespace_pangenes.py //g')
+        CDS_similarity_BLAST: \$(python $projectDir/scripts/CDS_similarity_BLAST.py --version 2>&1 | sed 's/CDS_similarity_BLAST.py //g')
     END_VERSIONS
     """
 }

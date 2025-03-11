@@ -13,4 +13,4 @@ N0_short_dup.tsv
 *test*
 *unique*
 scripts/gff.db
-*png
+*.png
