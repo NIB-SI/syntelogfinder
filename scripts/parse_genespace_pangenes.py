@@ -54,8 +54,9 @@ def drop_subset_rows(df: pd.DataFrame, na_values: Optional[List] = None, print_p
     subset_superset_pairs = {}
     
     # Pattern to match gene IDs and remove special characters at the end
-    gene_pattern = r'(Soltu\.Des\.v1_[A-Za-z0-9\.]+\d+)[\*\+]?'
-    
+    #gene_pattern = r'(Soltu\.[A-Za-z]+\_v[\d\.]+_[A-Za-z0-9]+)'
+    gene_pattern = r'[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)?_[A-Za-z0-9]+(?:\.\d+)?(?=[^*+])'
+
     # Pre-process all cells and extract gene sets for each cell
     # This avoids repeatedly parsing the same strings during comparisons
     row_data = []
@@ -284,7 +285,7 @@ def merge_overlapping_rows(df: pd.DataFrame, na_values: Optional[List] = None,
         print(f"Merging {num_merged} rows into their respective groups.\n")
     
     # Pattern to match gene IDs including special characters
-    gene_pattern = r'(Soltu\.Des\.v1_[A-Za-z0-9\.]+\d+[\*\+]?)'
+    gene_pattern = r'[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)?_[A-Za-z0-9]+(?:\.\d+)?(?=[^*+])'
     
     # Create the merged dataframe
     result_data = []
@@ -410,49 +411,72 @@ def count_comma_separated_values(df: pd.DataFrame, column_name: str) -> pd.Serie
 
 
 def get_attribute_lengths(gff_file: str, attribute: str) -> pd.DataFrame:
-    """Extract feature lengths from GFF file for a specific attribute type.
+    """Extract feature lengths from a GFF file for a specific attribute type.
     
     Args:
-        gff_file: Path to the GFF file
-        attribute: Feature type to extract (e.g., 'exon', 'CDS')
+        gff_file: Path to the GFF file.
+        attribute: Feature type to extract (e.g., 'exon', 'CDS', 'five_prime_UTR', 'three_prime_UTR').
         
     Returns:
-        DataFrame with transcript IDs and their corresponding feature lengths
+        DataFrame with transcript IDs and their corresponding feature lengths.
     """
     db_filename = 'gff.db'
     
-    # Check if the gff.db file exists
+    # Create a database if it doesn't exist
     if not os.path.exists(db_filename):
-        # Create a database from the GFF file
+        print(f"Creating GFF database: {db_filename}")
         db = gffutils.create_db(gff_file, dbfn=db_filename, keep_order=False,
-                             merge_strategy='merge', sort_attribute_values=False)
-    
-    # Load the existing gff.db file
+                                merge_strategy='merge', sort_attribute_values=False)
+    else:
+        print(f"Using existing GFF database: {db_filename}")
+
+    # Load the GFF database
     db = gffutils.FeatureDB(db_filename, keep_order=True)
 
-    # Initialize a dictionary to store transcript lengths and start coordinates
     transcript_info = {}
 
-    # Iterate over all features of the specified type in the GFF file
+    # Collect all transcript IDs in the GFF file
+    all_transcripts = {feature.id for feature in db.features_of_type("mRNA")}
+
+    # Iterate over all features of the specified type
     for feature in db.features_of_type(attribute):
-        parent_id = feature.attributes['Parent'][0]
+        # Handle missing Parent attribute safely
+        parent_id = feature.attributes.get('Parent', [None])[0]
+        if parent_id is None:
+            continue  # Skip if no parent ID found
+        
         length = feature.end - feature.start + 1
         
         if parent_id not in transcript_info:
-            # Get the parent transcript feature
-            parent = db[parent_id]
+            # Try retrieving the parent feature safely
+            try:
+                parent = db[parent_id]
+                parent_start = parent.start
+            except gffutils.FeatureNotFoundError:
+                parent_start = None  # Handle missing parent case
+            
             transcript_info[parent_id] = {
                 f'{attribute}_ref_length': 0,
-                f'{attribute}_parent_start': parent.start
+                f'{attribute}_parent_start': parent_start
             }
         
         transcript_info[parent_id][f'{attribute}_ref_length'] += length
-    
+
+    # Ensure all transcripts are in the final output
+    for transcript_id in all_transcripts:
+        if transcript_id not in transcript_info:
+            transcript_info[transcript_id] = {
+                f'{attribute}_ref_length': 0,
+                f'{attribute}_parent_start': None  # Could also be 0 if preferred
+            }
+
     # Convert dictionary to DataFrame
     df = pd.DataFrame.from_dict(transcript_info, orient='index')
-    df['transcript_id'] = df.index
+    df.reset_index(inplace=True)
+    df.rename(columns={'index': 'transcript_id'}, inplace=True)
+    print(df)
+    
     return df
-
 
 def make_barplot(df: pd.DataFrame, attribute: str, ax: plt.Axes, haplotype_labels: List[str]) -> None:
     """Create a barplot for length categories on the given axes.
@@ -465,6 +489,7 @@ def make_barplot(df: pd.DataFrame, attribute: str, ax: plt.Axes, haplotype_label
     """
     # Define custom order for categories
     custom_order = [
+        'not_annotated',
         'less_1%_difference', 
         'more_1%_difference', 
         'more_5%_difference', 
@@ -657,12 +682,12 @@ def merge_pangenes_gff(pangenes_pivot: pd.DataFrame, gff: pd.DataFrame) -> pd.Da
     
     return gff_pangenes
 
-
-def make_pie_chart(gff_pangenes: pd.DataFrame, output_prefix: str) -> None:
+def make_pie_chart(gff_pangenes: pd.DataFrame, syntelogs_category: str, output_prefix: str) -> None:
     """Create a pie chart showing distribution of synteny categories.
     
     Args:
         gff_pangenes: Merged GFF and pangenes DataFrame
+        syntelogs_category: Category to highlight in red
         output_prefix: Prefix for the output file
     """
     # Select only mRNA rows
@@ -674,31 +699,36 @@ def make_pie_chart(gff_pangenes: pd.DataFrame, output_prefix: str) -> None:
     # Count genes in each synteny category
     synt_counts = mrna_data['synteny_category'].value_counts()
     print(synt_counts)
-    # Get top 5 categories and group the rest as "other"
-    synt_counts_top = synt_counts[:10].copy()
-    synt_counts_top['other'] = synt_counts[10:].sum()
+    
+    # Get top 7 categories and group the rest as "other"
+    synt_counts_top = synt_counts[:7].copy()
+    synt_counts_top['other'] = synt_counts[7:].sum()
     
     # Sort alphabetically
     synt_counts_top.sort_index(inplace=True)
     
-    # Set up explode values for pie chart
-    explode = tuple([0.1 * (10-i) for i in range(len(synt_counts_top))])
+    # Set up colors: red for the specified category, gray for everything else
+    colors = ['#D3D3D3'] * len(synt_counts_top)  # Default gray for all slices
+    
+    # Find the index of the syntelogs category to highlight (if it exists)
+    if syntelogs_category in synt_counts_top.index:
+        highlight_idx = list(synt_counts_top.index).index(syntelogs_category)
+        colors[highlight_idx] = '#FF0000'  # Red for the highlighted category
     
     # Create figure
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(5, 5))
     
     # Create pie chart
     synt_counts_top.plot.pie(
-        startangle=90, 
-        explode=explode, 
+        startangle=90,
+        colors=colors,
         autopct=lambda pct: percent_func(pct, synt_counts)
     )
-    
+     
     # Save the chart
     plt.tight_layout()
-    plt.savefig(f'{output_prefix}_pie_chart.png')
-    plt.close()  # Close figure to free memory
-
+    plt.savefig(f'{output_prefix}_pie_chart.png', bbox_inches='tight')
+    plt.close() 
 
 def check_length_values(row: pd.Series, percent: float) -> bool:
     """Check if the difference between min and max values exceeds the specified percentage.
@@ -734,6 +764,7 @@ def add_length_category(df: pd.DataFrame, attribute: str) -> pd.DataFrame:
     length_cols = [col for col in df.columns if f'{attribute}_length_' in col and col.endswith('G')]
     
     df_subset = df[length_cols].astype(int)
+    print(df_subset)
     
     # Initialize category column
     df[f'{attribute}_length_category'] = 'unclassified'
@@ -757,6 +788,11 @@ def add_length_category(df: pd.DataFrame, attribute: str) -> pd.DataFrame:
     df.loc[df_subset.apply(lambda x: check_length_values(x, 20), axis=1), 
            f'{attribute}_length_category'] = 'more_20%_difference'
     
+    # Assign 'not_annotated' if all lengths are 0
+    df.loc[(df_subset == 0).all(axis=1), f'{attribute}_length_category'] = 'not_annotated'
+    # print the not_annotated rows
+    print(df.loc[(df_subset == 0).all(axis=1)])
+
     return df
 
 
@@ -890,7 +926,7 @@ def add_length_to_syntelogs(pangenes: pd.DataFrame, ref_lengths: pd.DataFrame, a
     df_synt_pivot.columns = renamed_columns
     
     # Drop rows with missing values
-    df_synt_pivot = df_synt_pivot.dropna()
+    df_synt_pivot = df_synt_pivot.dropna(subset=[f'{attribute}_length_1G'])
     
     # Add length categories and differences
     df_length = add_length_category(df_synt_pivot, attribute)
@@ -944,7 +980,7 @@ def main():
     
     # Create pie chart
     print("Creating pie chart...")
-    make_pie_chart(gff_pangenes, args.output)
+    make_pie_chart(gff_pangenes, args.syntelogs_category, args.output)
 
     # Filter for syntelogs based on category
     print("Filtering syntelogs...")
