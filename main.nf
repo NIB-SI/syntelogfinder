@@ -14,6 +14,7 @@ include { AGAT_spKeepLongestIsoform } from './modules/local/AGAT/spKeepLongestIs
 include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED } from './modules/local/gffread'
 include { SPLIT_HAPLOTYPES } from './modules/local/Split_haplotypes'
 include { GENESPACE_ANALYSIS } from './subworkflows/genespace_analysis'
+include { PROMOTOR_COMPARISON } from './subworkflows/promotor_comparison'
 include { EXTEND_GFF_FEATURES } from './modules/local/extend_gff_features'
 include { CDS_BLAST } from './subworkflows/cds_blast'
 include { SYNTELOG_SIMILARITY } from './modules/local/Syntelog_similarity'
@@ -33,6 +34,8 @@ gff_ch = Channel.fromPath(params.reference_gff)
     .map { gff -> tuple([id: gff.baseName], gff) }
 
 fasta_ch = Channel.fromPath(params.reference_fasta)
+
+promotor_length = 
 
 // Main workflow
 workflow {
@@ -84,6 +87,10 @@ workflow {
         genespace_ch,
         blast_ch.results
     )
+
+    // Run Promotor comparision subworkflow
+    agat_output.output_gtf.view()
+    PROMOTOR_COMPARISON(agat_output.output_gtf)
 }
 
 // Function to check if required parameters are set
