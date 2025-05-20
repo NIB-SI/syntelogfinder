@@ -20,12 +20,6 @@ include { SYNTELOG_SIMILARITY } from './modules/local/Syntelog_similarity'
 
 // Define pipeline parameters
 
-    // Input files
-params.reference_fasta = '/scratch/nadjafn/reference/Desiree_v1/De_v1.fa'
-params.reference_gff   = '/scratch/nadjafn/reference/Desiree_v1/De_v1.functional_annotations_nodigits.gff'
-    
-    // Output directory
-params.outdir = '/DKED/scratch/nadjafn/potato-allelic-orthogroups/output'
     
     // Tool paths
 params.mcscanx_path = '/DKED/scratch/nadjafn/MCScanX'
@@ -76,7 +70,6 @@ workflow {
     agat_output.output_gtf.view()
     // GENESPACE Analysis
     genespace_ch = GENESPACE_ANALYSIS(gffread_output, params.mcscanx_path, agat_output.output_gtf)
-
 
     // Extend GFF features
     extended_gff = EXTEND_GFF_FEATURES(agat_output.output_gtf, fasta_ch)

@@ -11,7 +11,7 @@ process GENESPACE_PARSE {
 
     output:
     tuple val(meta), val(haplotypes), path("${prefix}_categories.tsv"), emit: pangenes
-    tuple val(meta), path("${prefix}*.png"), emit: plots
+    tuple val(meta), path("${prefix}*.svg"), emit: plots
     path "versions.yml", emit: versions
 
     when:
@@ -20,7 +20,7 @@ process GENESPACE_PARSE {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}_genespace"
-    def haplotypes_arg = haplotypes.sort().collect { "1${it}" }.join('_') + '_synteny'
+    def haplotypes_arg = haplotypes.sort().collect { "1${it}" }.join('_') + '_s'
 
     """
     python $projectDir/scripts/parse_genespace_pangenes.py \\
@@ -29,7 +29,7 @@ process GENESPACE_PARSE {
         --output ${prefix} \\
         -s $haplotypes_arg \\
         $args
-    echo "echo!!?!?"
+    echo "echo!!?!?##!"
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')

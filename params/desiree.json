@@ -1,0 +1,5 @@
+{
+    "reference_fasta": "/scratch/nadjafn/reference/Desiree_v1/De_v1.fa",
+    "reference_gff": "/scratch/nadjafn/reference/Desiree_v1/De_v1.functional_annotations_nodigits.gff",
+    "outdir": "/DKED/scratch/nadjafn/potato-allelic-orthogroups/output_desiree"
+}

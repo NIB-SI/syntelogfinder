@@ -26,13 +26,14 @@ process GENESPACE_INPUT_PREPERATION {
     for gff in $gff
     do
         grep "CDS" \$gff | cut -f1-4 > ${prefix}/bed/\$(basename "\${gff%.*}").bed
+        sed -i 's/\\(chr[0-9]\\+\\)_[0-9]\\+/\\1/g' ${prefix}/bed/\$(basename "\${gff%.*}").bed
     done
 
     for fasta in $fasta
     do
         cp \$fasta ${prefix}/peptide/\$(basename "\${fasta%.*}").fa
     done
-
+        # remove the haplotype prefix
 
     """
 

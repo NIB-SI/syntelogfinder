@@ -1,0 +1,5 @@
+{
+    "reference_fasta": "/scratch/nadjafn/reference/Atlantic/ATL_v3.asm.fa",
+    "reference_gff": "/scratch/nadjafn/Atlantic_ASE/output/liftoff/Unitato2Atl_liftoff_a0.9s0.9.gff",
+    "outdir": "/DKED/scratch/nadjafn/potato-allelic-orthogroups/output_atlantic_liftoff"
+}

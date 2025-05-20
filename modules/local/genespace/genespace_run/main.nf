@@ -29,6 +29,7 @@ process GENESPACE_RUN {
                                              --mcscanx_path $MCscanX  \
                                              --ploidy 1 \
                                              --ref_genome hap1 \
+                                             --sameChr TRUE \
                                              --output $output_name \
 
     Rscript --version > versions.yml

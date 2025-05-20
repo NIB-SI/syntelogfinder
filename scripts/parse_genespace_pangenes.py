@@ -55,7 +55,9 @@ def drop_subset_rows(df: pd.DataFrame, na_values: Optional[List] = None, print_p
     
     # Pattern to match gene IDs and remove special characters at the end
     #gene_pattern = r'(Soltu\.[A-Za-z]+\_v[\d\.]+_[A-Za-z0-9]+)'
-    gene_pattern = r'[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)?_[A-Za-z0-9]+(?:\.\d+)?(?=[^*+])'
+    gene_pattern = r'([A-Za-z0-9]+[._][A-Za-z0-9_]+\d+[A-Za-z0-9_.]*)[*+]?$'
+
+
 
     # Pre-process all cells and extract gene sets for each cell
     # This avoids repeatedly parsing the same strings during comparisons
@@ -176,7 +178,9 @@ def identify_overlapping_rows(df: pd.DataFrame, na_values: Optional[List] = None
         na_values = ['NA', 'N/A', '', None]
     
     # Pattern to match gene IDs and remove special characters at the end
-    gene_pattern = r'(Soltu\.Des\.v1_[A-Za-z0-9\.]+\d+)[\*\+]?'
+    #gene_pattern = r'(Soltu\.Des\.v1_[A-Za-z0-9\.]+\d+)[\*\+]?'
+    gene_pattern = r'([A-Za-z0-9]+[._][A-Za-z0-9_]+\d+[A-Za-z0-9_.]*)[*+]?$'
+    
     
     # Map gene IDs to the rows they appear in
     gene_to_rows = defaultdict(set)
@@ -285,7 +289,12 @@ def merge_overlapping_rows(df: pd.DataFrame, na_values: Optional[List] = None,
         print(f"Merging {num_merged} rows into their respective groups.\n")
     
     # Pattern to match gene IDs including special characters
-    gene_pattern = r'[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)?_[A-Za-z0-9]+(?:\.\d+)?(?=[^*+])'
+    #gene_pattern = r'(Soltu\.Des\.v1_[A-Za-z0-9\.]+\d+[\*\+]?)'
+    #gene_pattern = r'[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)?_[A-Za-z0-9]+(?:\.\d+[\*\+]?)'
+    # More specific but still general pattern
+    # gene_pattern = r'([A-Za-z0-9\.]+_C\d+H\d+G\d+\.\d+[\*\+]?)'
+    gene_pattern = r'([A-Za-z0-9]+[._][A-Za-z0-9_]+\d+[A-Za-z0-9_.]*\*?[\*\+]?)'
+    ## here is the problem with the regex, it is not matching the gene IDs correctly
     
     # Create the merged dataframe
     result_data = []
@@ -538,7 +547,7 @@ def generate_combined_plots(df_list: List[pd.DataFrame], attributes: List[str], 
         output_prefix: Prefix for the output file
     """
     # Set up the subplots (1 row, n columns for each attribute)
-    fig, axes = plt.subplots(1, len(attributes), figsize=(15, 5), sharey=True)
+    fig, axes = plt.subplots(1, len(attributes), figsize=(13, 5), sharey=True)
 
     # If only one plot, axes won't be a list, so make it iterable
     if len(attributes) == 1:
@@ -552,7 +561,7 @@ def generate_combined_plots(df_list: List[pd.DataFrame], attributes: List[str], 
 
     # Adjust layout to prevent overlap and save the combined plot
     plt.tight_layout()  # Give space for the legend
-    plt.savefig(f'{output_prefix}_combined_barplots.png')
+    plt.savefig(f'{output_prefix}_combined_barplots.svg')
     plt.close(fig)  # Close figure to free memory
 
 
@@ -604,14 +613,14 @@ def add_synteny_category(pangenes: pd.DataFrame) -> pd.DataFrame:
         pangenes[f'{hap}_count'] = count_comma_separated_values(pangenes, hap).astype(str) + hap
     
     # Add synteny classification
-    pangenes['true_synteny'] = 'synteny'
+    pangenes['true_synteny'] = 's'
     
     # Check for special characters in any haplotype column
     has_special_chars = False
     for hap in haplotype_cols:
         has_special_chars = has_special_chars | pangenes[hap].str.contains('\*') | pangenes[hap].str.contains('\+')
     
-    pangenes.loc[has_special_chars, 'true_synteny'] = 'no_synteny'
+    pangenes.loc[has_special_chars, 'true_synteny'] = 'no_s'
 
     # Add a synteny ID column to group transcripts in the same synteny group
     pangenes['Synt_id'] = 'Synt_id_' + pangenes.index.astype(str)
@@ -682,28 +691,24 @@ def merge_pangenes_gff(pangenes_pivot: pd.DataFrame, gff: pd.DataFrame) -> pd.Da
     
     return gff_pangenes
 
+
 def make_pie_chart(gff_pangenes: pd.DataFrame, syntelogs_category: str, output_prefix: str) -> None:
     """Create a pie chart showing distribution of synteny categories.
-    
     Args:
-        gff_pangenes: Merged GFF and pangenes DataFrame
-        syntelogs_category: Category to highlight in red
-        output_prefix: Prefix for the output file
+    gff_pangenes: Merged GFF and pangenes DataFrame
+    output_prefix: Prefix for the output file
     """
     # Select only mRNA rows
     mrna_data = gff_pangenes[gff_pangenes['type'] == 'mRNA'].copy()
-    
     # Sort by synteny category
     mrna_data = mrna_data.sort_values('synteny_category')
-    
     # Count genes in each synteny category
     synt_counts = mrna_data['synteny_category'].value_counts()
     print(synt_counts)
     
-    # Get top 7 categories and group the rest as "other"
+    # Get top 5 categories and group the rest as "other"
     synt_counts_top = synt_counts[:7].copy()
     synt_counts_top['other'] = synt_counts[7:].sum()
-    
     # Sort alphabetically
     synt_counts_top.sort_index(inplace=True)
     
@@ -715,20 +720,22 @@ def make_pie_chart(gff_pangenes: pd.DataFrame, syntelogs_category: str, output_p
         highlight_idx = list(synt_counts_top.index).index(syntelogs_category)
         colors[highlight_idx] = '#FF0000'  # Red for the highlighted category
     
+    # Set up explode values for pie chart
+    explode = tuple([0.1 * (7-i) for i in range(len(synt_counts_top))])
     # Create figure
-    plt.figure(figsize=(5, 5))
-    
+    plt.figure(figsize=(7, 7))
     # Create pie chart
     synt_counts_top.plot.pie(
-        startangle=90,
-        colors=colors,
-        autopct=lambda pct: percent_func(pct, synt_counts)
+    startangle=90,
+    explode=explode,
+    autopct=lambda pct: percent_func(pct, synt_counts),
+    colors = colors
     )
-     
     # Save the chart
     plt.tight_layout()
-    plt.savefig(f'{output_prefix}_pie_chart.png', bbox_inches='tight')
-    plt.close() 
+    plt.savefig(f'{output_prefix}_pie_chart.svg', bbox_inches='tight')
+    plt.close() # Close figure to free memory
+
 
 def check_length_values(row: pd.Series, percent: float) -> bool:
     """Check if the difference between min and max values exceeds the specified percentage.
@@ -926,7 +933,7 @@ def add_length_to_syntelogs(pangenes: pd.DataFrame, ref_lengths: pd.DataFrame, a
     df_synt_pivot.columns = renamed_columns
     
     # Drop rows with missing values
-    df_synt_pivot = df_synt_pivot.dropna(subset=[f'{attribute}_length_1G'])
+    # df_synt_pivot = df_synt_pivot.dropna(subset=[f'{attribute}_length_1G'])
     
     # Add length categories and differences
     df_length = add_length_category(df_synt_pivot, attribute)
@@ -978,7 +985,7 @@ def main():
     print("Merging pangenes and GFF data...")
     gff_pangenes = merge_pangenes_gff(pangenes_pivot, gff)
     
-    # Create pie chart
+    # Create pie charts
     print("Creating pie chart...")
     make_pie_chart(gff_pangenes, args.syntelogs_category, args.output)
 

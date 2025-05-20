@@ -1,0 +1,5 @@
+{
+    "reference_fasta": "/scratch/nadjafn/reference/C88/C88.v1.fa",
+    "reference_gff": "/scratch/nadjafn/reference/C88/C88.v1.gene.gff3",
+    "outdir": "/DKED/scratch/nadjafn/potato-allelic-orthogroups/output_C88"
+}

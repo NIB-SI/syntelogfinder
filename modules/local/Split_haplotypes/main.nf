@@ -24,6 +24,8 @@ process SPLIT_HAPLOTYPES {
     """
     for ((i=1; i<=$ploidy; i++)); do
         grep -e "chr_\\?[0-9]\\+_\${i}" "$gff" > "hap\${i}.gff"
+        # remove the _haplotype suffix on chr name
+        # sed 's/\\(chr[0-9]\\+\\)_[0-9]\\+/\\1/g' "hap\${i}_pre.gff" > "hap\${i}.gff"
     done
 
 

@@ -13,7 +13,7 @@ process SYNTELOG_SIMILARITY {
     tuple val(meta), path(blast_file)
 
     output:
-    tuple val(meta), val(haplotypes), path("${prefix}_blast*.tsv"), emit: blast_pangenes
+    tuple val(meta), val(haplotypes), path("${prefix}*_analysis.tsv"), emit: blast_pangenes
     tuple val(meta), path("${prefix}*.png"), emit: plots
     path "versions.yml", emit: versions
 
@@ -31,8 +31,7 @@ process SYNTELOG_SIMILARITY {
         --syntenic_genes ${pangenes} \\
         --output ${prefix} \\
         $args
-
-
+    echo "Hello"
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')

@@ -16,6 +16,9 @@ option_list <- list(
   make_option(c("-r", "--ref_genome"), type = "character", 
               default = "hap1",
               help = "Reference genome for query_pangenes [default= %default]", metavar = "character"),
+  make_option(c("-c", "--sameChr"), type = "logical",
+              default = TRUE,
+              help = "Use only same chromosomes to find pangenes [default= %default]", metavar = "logical"), 
   make_option(c("-o", "--output"), type = "character", 
               default = "test.tsv",
               help = "Output of pangenes [default= %default]", metavar = "character")
@@ -29,7 +32,8 @@ opt <- parse_args(opt_parser)
 gpar <- init_genespace(
   wd = opt$working_dir,
   path2mcscanx = opt$mcscanx_path,
-  ploidy = opt$ploidy
+  ploidy = opt$ploidy,
+  onlySameChrs = TRUE #opt$sameChr
 )
 
 # Run GENESPACE
@@ -63,3 +67,4 @@ write.table(pangenes, file = opt$output , sep = "\t", quote = FALSE, row.names =
 
 # Print the result
 print(head(pangenes))
+
