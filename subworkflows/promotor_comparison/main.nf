@@ -8,8 +8,8 @@ workflow PROMOTOR_COMPARISON {
         promotor_length
 
     main:
-        GFF_TO_PROMOTER(gff_file, fasta_ch, promotor_length)
+        promotor_gff = GFF_TO_PROMOTER(gff_file, fasta_ch, promotor_length)
 
-    emit:
-        genespace_parse.pangenes
+    // emit:
+    //     promotor_gff
 }

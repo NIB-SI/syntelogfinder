@@ -35,7 +35,7 @@ gff_ch = Channel.fromPath(params.reference_gff)
 
 fasta_ch = Channel.fromPath(params.reference_fasta)
 
-promotor_length = 
+promotor_length = Channel.from([3000])
 
 // Main workflow
 workflow {
@@ -90,7 +90,7 @@ workflow {
 
     // Run Promotor comparision subworkflow
     agat_output.output_gtf.view()
-    PROMOTOR_COMPARISON(agat_output.output_gtf)
+    PROMOTOR_COMPARISON(agat_output.output_gtf, fasta_ch, promotor_length)
 }
 
 // Function to check if required parameters are set
