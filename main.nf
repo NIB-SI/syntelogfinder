@@ -73,7 +73,7 @@ workflow {
     agat_output.output_gtf.view()
     // GENESPACE Analysis
     genespace_ch = GENESPACE_ANALYSIS(gffread_output, params.mcscanx_path, agat_output.output_gtf)
-
+    genespace_ch.view()
     // Extend GFF features
     extended_gff = EXTEND_GFF_FEATURES(agat_output.output_gtf, fasta_ch)
 
@@ -90,7 +90,10 @@ workflow {
 
     // Run Promotor comparision subworkflow
     agat_output.output_gtf.view()
-    PROMOTOR_COMPARISON(agat_output.output_gtf, fasta_ch, promotor_length)
+
+    synt_id = Channel.from(["Synt_id_17129"])
+    PROMOTOR_COMPARISON(agat_output.output_gtf, fasta_ch, promotor_length, genespace_ch, synt_id)
+   
 }
 
 // Function to check if required parameters are set

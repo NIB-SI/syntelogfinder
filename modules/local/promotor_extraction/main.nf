@@ -1,0 +1,43 @@
+process PROMOTOR_EXTRACTION {
+    tag "$meta.id"
+    label 'process_low'
+
+    conda "/users/nadjafn/.conda/envs/gffread"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    'https://depot.galaxyproject.org/singularity/gffread:0.12.7--hdcf5f25_4' :
+    'biocontainers/gffread:0.12.7--hdcf5f25_4' }"
+    
+    input:
+    tuple val(meta), path(promoter_gff_file), val(haplotypes), path(synt_file)
+    path(genome_file)
+    val(synt_id)
+
+    output:
+    tuple val(meta), val(synt_id), path("individual_seqs/*fasta"), emit: fasta
+    tuple val(meta), val(synt_id), path("individual_seqs/*gff"), emit: gff
+    path "versions.yml"                                    , emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    mkdir -p individual_seqs
+
+    # Get the gene IDs from the syntelog file
+    gene_ids=\$(grep -w ${synt_id} ${synt_file} | awk '{print \$1}')
+
+    # Process each gene ID
+    for gene_id in \$gene_ids; do
+        grep "promoter_\${gene_id}" ${promoter_gff_file} > individual_seqs/\${gene_id}_promotor.gff
+        gffread -g ${genome_file} -w individual_seqs/\${gene_id}_promotor.fasta individual_seqs/\${gene_id}_promotor.gff
+    done
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        gffread: \$(gffread --version 2>&1 | sed 's/^.*gffread v//; s/ .*\$//')
+    END_VERSIONS
+    """
+}

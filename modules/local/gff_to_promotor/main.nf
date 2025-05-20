@@ -4,7 +4,7 @@ process GFF_TO_PROMOTER {
     tag "$meta.id"
     label 'process_low'
 
-    conda "syri"
+    conda "/users/nadjafn/.conda/envs/pyranges"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'community.wave.seqera.io/library/pip_numpy_pyfaidx_pyranges:d084832c91636c20' :
         'quay.io/biocontainers/bedtools:2.30.0--hc088bd4_0' }"
@@ -15,7 +15,7 @@ process GFF_TO_PROMOTER {
     val(promotor_length)
 
     output:
-    tuple val(meta), path("*_promotor.gff"), emit: promoter_bed
+    tuple val(meta), path("*_promotor.gff"), emit: gff
     path "versions.yml"                    , emit: versions
 
     when:
@@ -25,7 +25,7 @@ process GFF_TO_PROMOTER {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    python  /scratch/nadjafn/test_PROMOTOR_analysis/scripts/pormotor_extractor.py 
+    python  /scratch/nadjafn/test_PROMOTOR_analysis/scripts/pormotor_extractor.py \
             --gff $gff_file \
             --fasta $genome_file \
             --output ${prefix}_promotor.gff \

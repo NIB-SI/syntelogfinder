@@ -2,6 +2,8 @@ process GENESPACE_RUN {
     tag "$meta.id"
     label 'process_low'
 
+    cache 'lenient'
+
     // conda "${moduleDir}/environment.yml"
     conda "/users/nadjafn/.conda/envs/orthofinder"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
