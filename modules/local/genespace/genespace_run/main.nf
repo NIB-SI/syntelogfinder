@@ -5,7 +5,8 @@ process GENESPACE_RUN {
     cache 'lenient'
 
     // conda "${moduleDir}/environment.yml"
-    conda "/users/nadjafn/.conda/envs/orthofinder"
+    conda "/users/nadjafn/.conda/envs/genespace-env"
+    // https://github.com/HuffordLab-Containers/genespace_docker/blob/main/Dockerfile
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/gffread:0.12.7--hdcf5f25_4' :
         'biocontainers/gffread:0.12.7--hdcf5f25_4' }"

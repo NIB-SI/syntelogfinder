@@ -8,13 +8,11 @@ process PROMOTOR_EXTRACTION {
     'biocontainers/gffread:0.12.7--hdcf5f25_4' }"
     
     input:
-    tuple val(meta), path(promoter_gff_file), val(haplotypes), path(synt_file)
-    path(genome_file)
-    val(synt_id)
+    tuple val(synt_id), val(meta), path(promoter_gff_file), val(meta2), val(haplotypes), path(synt_file), path(genome_file)
 
     output:
     tuple val(meta), val(synt_id), path("individual_seqs/*fasta"), emit: fasta
-    tuple val(meta), val(synt_id), path("individual_seqs/*gff"), emit: gff
+    tuple val(meta.id), val(synt_id), path("individual_seqs/*gff"), emit: gff
     path "versions.yml"                                    , emit: versions
 
     when:

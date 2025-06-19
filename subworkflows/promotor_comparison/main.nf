@@ -3,6 +3,7 @@ include { PROMOTOR_EXTRACTION } from '../../modules/local/promotor_extraction'
 include { MINIMAP2_ALIGN } from '../../../modules/modules/nf-core/minimap2/align/'
 include { SVIM_ASM } from '../../modules/local/svim_asm/'
 include { MERGE_VCFS} from '../../modules/local/merge_vcfs'
+include { VCF_TO_SUMMARY } from '../../modules/local/vcf_to_summary'
 
 workflow PROMOTOR_COMPARISON {
     take:
@@ -10,11 +11,17 @@ workflow PROMOTOR_COMPARISON {
         fasta_ch
         promotor_length
         pangene_file
-        synt_id
+        synt_ids_ch 
+
     main:
         promotor_gff = GFF_TO_PROMOTER(gff_file, fasta_ch, promotor_length)
-      
-        promotors = PROMOTOR_EXTRACTION(promotor_gff.gff.join(pangene_file), fasta_ch, synt_id)
+
+        // Combine the synt_ids with other inputs
+        promotor_inputs = synt_ids_ch.flatten().combine(promotor_gff.gff)
+                                     .combine(pangene_file)
+                                     .combine(fasta_ch)
+
+        promotors = PROMOTOR_EXTRACTION(promotor_inputs)
   
             // Generate all pairwise combinations
         pairwise_combinations = promotors.fasta
@@ -57,28 +64,32 @@ workflow PROMOTOR_COMPARISON {
         svim_asm_output = SVIM_ASM(svim_asm_input)
         //svim_asm_output.vcf.groupTuple().view()
 
-
         collected_vcfs = svim_asm_output.vcf
-        .map { meta, vcf -> 
-            def key = [meta.id.id, meta.synt_id, meta.direction]
-            [key, [meta, vcf]]
-        }
-        .groupTuple()
-        .map { key, values -> 
-            def (id, synt_id, direction) = key
-            def meta = [id: id, synt_id: synt_id, direction: direction]
-            def vcfs = values.collect { it[1] }
-            [meta, vcfs]
-        }
+            .map { meta, vcf -> 
+                def new_meta = [id: meta.id.id]
+                [new_meta, meta.synt_id, vcf]
+            }
+            .groupTuple(by: [0,1])
 
-
-        merged_vcfs = MERGE_VCFS(
+     
+        merged = MERGE_VCFS(
             collected_vcfs
         )
+    
+    
+        summary_input = merged.merged_vcf
+                .join(promotors.gff, by:[1])
+                .map { synt_id, meta, vcf, meta2, gff -> 
+                        def new_meta = [id: meta]
+                        [new_meta, synt_id, vcf, gff]
+                        }
 
-        // now summarize the results
-        //- also merge the gff files
-
+        VCF_TO_SUMMARY(
+            summary_input,
+            20
+        )
+        emit:
+            summary = VCF_TO_SUMMARY.out.summary
 }
 
 

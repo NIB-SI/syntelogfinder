@@ -1,21 +1,26 @@
 # potato-allelic-orthogroups
 
-Nextflow pipeline to unify gene IDs of phased potato references based on orthogroups and syntenty using GENESPACE
-
-pipeline to create input for SAynVisio to vizualize the 12 x 4n chromosomes from Otava, Atlantic and Castle Russet
-
-Codong sequence or transcript sequence?
+Nextflow pipeline to group genes on polyploid phased assemblies that are orthologous and syntelogous based on GENESPACE.
 
 minimal input:
-- genome fasta
-- gff with CDS!!!
+- genome fasta of phased reference
+- gff with CDS corresponding to the reference
+
+config file should look like this
+
+
+{
+    "reference_fasta": "genome.fa",
+    "reference_gff": "annotation.gff3",
+    "outdir": "output_path"
+}
 
 
 
 
+## Output
 
-
-
+ category grouping
 
 
 
