@@ -43,7 +43,7 @@ workflow {
     agat_output = AGAT_spKeepLongestIsoform(gff_ch)
 
     // Split GFF into haplotypes
-    split_gff = SPLIT_HAPLOTYPES(agat_output.output_gtf)
+    split_gff = SPLIT_HAPLOTYPES(agat_output.output_gff)
 
     // Prepare haplotype channels
     haplotype_ch = split_gff.output_gtf
@@ -72,7 +72,7 @@ workflow {
         .groupTuple(by: 0)
 
     // GENESPACE Analysis
-    genespace_ch = GENESPACE_ANALYSIS(gffread_output, agat_output.output_gtf)
+    genespace_ch = GENESPACE_ANALYSIS(gffread_output, agat_output.output_gff)
 
     // Extend GFF features
     extended_gff = EXTEND_GFF_FEATURES(gff_ch, fasta_ch)
@@ -113,8 +113,8 @@ workflow {
     // Run Promotor comparision subworkflow
     synt_id_ch = Channel.from(['Synt_id_15856','Synt_id_17129'])
 
-    // promotor_summary = PROMOTOR_COMPARISON(agat_output.output_gtf, fasta_ch, promotor_length, genespace_ch, synt_id_ch)
-    // promotor_summary.view()
+    promotor_summary = PROMOTOR_COMPARISON(agat_output.output_gff, fasta_ch, promotor_length, genespace_ch, synt_id_ch)
+    promotor_summary.view()
 }
 
 // Function to check if required parameters are set
