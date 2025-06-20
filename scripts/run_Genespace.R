@@ -4,22 +4,25 @@ library(optparse)
 
 # Define command-line arguments
 option_list <- list(
-  make_option(c("-w", "--working_dir"), type = "character", 
+  make_option(c("-w", "--working_dir"), type = "character",
               default = "/scratch/nadjafn/potato-allelic-orthogroups/results/input_genespace/",
               help = "Working directory [default= %default]", metavar = "character"),
-  make_option(c("-m", "--mcscanx_path"), type = "character", 
+  make_option(c("-m", "--mcscanx_path"), type = "character",
               default = "/scratch/nadjafn/MCScanX",
               help = "Path to MCScanX [default= %default]", metavar = "character"),
-  make_option(c("-p", "--ploidy"), type = "integer", 
+  make_option(c("-p", "--ploidy"), type = "integer",
               default = 1,
               help = "Ploidy level [default= %default]", metavar = "integer"),
-  make_option(c("-r", "--ref_genome"), type = "character", 
+  make_option(c("-r", "--ref_genome"), type = "character",
               default = "hap1",
               help = "Reference genome for query_pangenes [default= %default]", metavar = "character"),
   make_option(c("-c", "--sameChr"), type = "logical",
               default = TRUE,
-              help = "Use only same chromosomes to find pangenes [default= %default]", metavar = "logical"), 
-  make_option(c("-o", "--output"), type = "character", 
+              help = "Use only same chromosomes to find pangenes [default= %default]", metavar = "logical"),
+  make_option(c("-t", "--threads"), type = "integer",
+              default = 1,
+              help = "Number of cores for running genespace", metavar = "integer"),
+  make_option(c("-o", "--output"), type = "character",
               default = "test.tsv",
               help = "Output of pangenes [default= %default]", metavar = "character")
 )
@@ -33,7 +36,8 @@ gpar <- init_genespace(
   wd = opt$working_dir,
   path2mcscanx = opt$mcscanx_path,
   ploidy = opt$ploidy,
-  onlySameChrs = TRUE #opt$sameChr
+  onlySameChrs = opt$sameChr,
+  nCores = opt$threads
 )
 
 # Run GENESPACE

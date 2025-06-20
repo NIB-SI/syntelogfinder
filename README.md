@@ -15,6 +15,7 @@ config file should look like this
     "outdir": "output_path"
 }
 
+Important gff3 file should be processed with gffread -F --keep-exon-attrs to ensure right format
 
 
 

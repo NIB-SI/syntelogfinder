@@ -1,6 +1,6 @@
 process GENESPACE_RUN {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_medium'
 
     cache 'lenient'
 
@@ -13,7 +13,6 @@ process GENESPACE_RUN {
 
     input:
     tuple val(meta), val(haplotypes), path(fasta), path(gff), path(input_dir)
-    path (MCscanX)
 
     output:
     tuple val(meta), val(haplotypes), path("*.tsv")  , emit: pangenes      , optional: true
@@ -29,11 +28,11 @@ process GENESPACE_RUN {
     def ref_haplotype = haplotypes[0]
     """
     Rscript $baseDir/scripts/run_Genespace.R --working_dir $input_dir \
-                                             --mcscanx_path $MCscanX  \
+                                             --mcscanx_path $params.mcscanx_path \
                                              --ploidy 1 \
                                              --ref_genome hap1 \
-                                             --sameChr TRUE \
-                                             --output $output_name \
+                                             --threads $task.cpus \
+                                             --output $output_name
 
     Rscript --version > versions.yml
     """

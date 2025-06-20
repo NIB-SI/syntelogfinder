@@ -5,12 +5,11 @@ include { GENESPACE_PARSE } from '../../modules/local/genespace/genespace_parse'
 workflow GENESPACE_ANALYSIS {
     take:
         gffread_output
-        mcscanx_path
         agat_output
 
     main:
         genespace_input = GENESPACE_INPUT_PREPERATION(gffread_output)
-        genespace_run = GENESPACE_RUN(genespace_input.dir, mcscanx_path)
+        genespace_run = GENESPACE_RUN(genespace_input.dir)
         genespace_parse = GENESPACE_PARSE(genespace_run.pangenes.join(agat_output))
 
     emit:
