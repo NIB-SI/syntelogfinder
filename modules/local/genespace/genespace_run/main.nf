@@ -1,16 +1,18 @@
 process GENESPACE_RUN {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_medium'
+
+    cache 'lenient'
 
     // conda "${moduleDir}/environment.yml"
-    conda "/users/nadjafn/.conda/envs/orthofinder"
+    conda "/users/nadjafn/.conda/envs/genespace-env"
+    // https://github.com/HuffordLab-Containers/genespace_docker/blob/main/Dockerfile
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/gffread:0.12.7--hdcf5f25_4' :
         'biocontainers/gffread:0.12.7--hdcf5f25_4' }"
 
     input:
     tuple val(meta), val(haplotypes), path(fasta), path(gff), path(input_dir)
-    path (MCscanX)
 
     output:
     tuple val(meta), val(haplotypes), path("*.tsv")  , emit: pangenes      , optional: true
@@ -26,11 +28,11 @@ process GENESPACE_RUN {
     def ref_haplotype = haplotypes[0]
     """
     Rscript $baseDir/scripts/run_Genespace.R --working_dir $input_dir \
-                                             --mcscanx_path $MCscanX  \
+                                             --mcscanx_path $params.mcscanx_path \
                                              --ploidy 1 \
                                              --ref_genome hap1 \
-                                             --sameChr TRUE \
-                                             --output $output_name \
+                                             --threads $task.cpus \
+                                             --output $output_name
 
     Rscript --version > versions.yml
     """

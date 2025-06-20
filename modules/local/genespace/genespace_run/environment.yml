@@ -1,5 +1,23 @@
+name: genespace-env
 channels:
   - conda-forge
   - bioconda
+  - r
 dependencies:
-  - bioconda::orthofinder=2.5.5
+  - r-base=4.2.2
+  - r-devtools
+  - r-essentials
+  - r-biocmanager
+  - bioconductor-rtracklayer
+  - orthofinder=2.5.5
+  - git
+  - gcc_linux-64  # for compiling R packages
+  - gxx_linux-64  # for compiling R packages
+  - make
+  - cmake
+  - pkg-config
+  - r-rcpp
+  - r-rcpparmadillo
+  - pip
+  - pip:
+    - setuptools
