@@ -25,141 +25,6 @@ def parse_pangenes(pangenes_file: str) -> pd.DataFrame:
     df = pd.read_csv(pangenes_file, sep="\t", header=0, index_col=False, na_values=['NA', 'N/A', '', 'NaN'])
     return df.replace(', ', ',', regex=True)
 
-
-
-def drop_subset_rows(df: pd.DataFrame, na_values: Optional[List] = None, print_pairs: bool = True) -> pd.DataFrame:
-    """
-    In the genespace pangenes output file, there are some sets of genes that are subsets of other sets of genes.
-    This function will drop the subset rows and keep the superset rows.
-
-    Parameters:
-    -----------
-    df : pd.DataFrame
-        The input dataframe
-    na_values : list, optional
-        List of values to treat as NA besides pandas defaults
-    print_pairs : bool, default=True
-        Whether to print the subset-superset pairs
-
-    Returns:
-    --------
-    pd.DataFrame
-        A dataframe with subset rows removed
-    """
-    if na_values is None:
-        na_values = ['NaN', 'NA', 'N/A', '', None]
-
-    # Track rows to drop and their corresponding superset rows
-    rows_to_drop = set()
-    subset_superset_pairs = {}
-
-    # Pattern to match gene IDs and remove special characters at the end
-    #gene_pattern = r'(Soltu\.[A-Za-z]+\_v[\d\.]+_[A-Za-z0-9]+)'
-    # gene_pattern = r'([A-Za-z0-9]+[._][A-Za-z0-9_]+\d+[A-Za-z0-9_.]*)[*+]?$'
-    #gene_pattern = r'([A-Za-z0-9._-]+)[*+]?$'
-
-    gene_pattern = r'(\S+)$'
-
-
-    # Pre-process all cells and extract gene sets for each cell
-    # This avoids repeatedly parsing the same strings during comparisons
-    row_data = []
-
-    for idx, row in df.iterrows():
-        row_genes = {}
-        for col in df.columns:
-            value = row[col]
-            if pd.isna(value) or value in na_values:
-                row_genes[col] = set()
-            else:
-                # Extract genes, normalize by removing special characters
-                if isinstance(value, str):
-                    genes = set(re.findall(gene_pattern, value))
-                    row_genes[col] = genes
-                else:
-                    # Handle non-string values
-                    row_genes[col] = {str(value)}
-
-        row_data.append((idx, row_genes))
-
-    # Create an index of which rows contain each gene
-    # This allows us to quickly find potential supersets
-    gene_to_rows = defaultdict(set)
-    for idx, row_genes in row_data:
-        for col, genes in row_genes.items():
-            for gene in genes:
-                gene_to_rows[f"{col}:{gene}"].add(idx)
-
-    # Optimize comparison strategy - compare each row with potential supersets only
-    for i, (idx_i, row_genes_i) in enumerate(row_data):
-        if idx_i in rows_to_drop:
-            continue
-
-        # Collect all potential superset rows by finding rows that contain
-        # at least one gene from each column where row_i has genes
-        potential_supersets = set()
-        is_empty_row = True
-
-        for col, genes in row_genes_i.items():
-            if not genes:
-                continue
-
-            is_empty_row = False
-            # Find rows that contain at least one gene from this column
-            for gene in genes:
-                potential_supersets.update(gene_to_rows[f"{col}:{gene}"])
-
-        # If the row is entirely empty (all NA), it's a subset of every row
-        if is_empty_row and len(row_data) > 1:
-            rows_to_drop.add(idx_i)
-            # Just choose the first non-self row as the superset for reporting
-            for j, (idx_j, _) in enumerate(row_data):
-                if idx_i != idx_j:
-                    subset_superset_pairs[idx_i] = idx_j
-                    break
-            continue
-
-        # Remove self from potential supersets
-        potential_supersets.discard(idx_i)
-
-        # Check if row_i is a subset of any potential superset
-        for idx_j in potential_supersets:
-            if idx_j in rows_to_drop:
-                continue
-
-            # Find the row_genes for idx_j
-            row_genes_j = next(rg for idx, rg in row_data if idx == idx_j)
-
-            # Check if row_i is a subset of row_j
-            is_subset = True
-
-            for col in df.columns:
-                genes_i = row_genes_i[col]
-                genes_j = row_genes_j[col]
-
-                # If row_i has genes that are not in row_j for this column,
-                # it's not a subset
-                if genes_i and not genes_i.issubset(genes_j):
-                    is_subset = False
-                    break
-
-            if is_subset:
-                rows_to_drop.add(idx_i)
-                subset_superset_pairs[idx_i] = idx_j
-                break
-
-    # Print the subset-superset pairs if requested
-    if print_pairs and subset_superset_pairs:
-        print(f"Found {len(subset_superset_pairs)} subset rows to remove:\n")
-
-        # for subset_idx, superset_idx in subset_superset_pairs.items():
-        #     print("SUBSET ROW (index {}):\n{}".format(subset_idx, df.loc[subset_idx].to_string()))
-        #     print("\nSUPERSET ROW (index {}):\n{}".format(superset_idx, df.loc[superset_idx].to_string()))
-        #     print("\n" + "-"*80 + "\n")
-
-    # Drop the identified subset rows
-    return df.drop(rows_to_drop)
-
 def identify_overlapping_rows(df: pd.DataFrame, na_values: Optional[List] = None) -> Dict[int, Set[int]]:
     """
     Identify groups of rows that have overlapping gene IDs.
@@ -179,10 +44,7 @@ def identify_overlapping_rows(df: pd.DataFrame, na_values: Optional[List] = None
     if na_values is None:
         na_values = ['NA', 'N/A', '', None]
 
-    # Pattern to match gene IDs and remove special characters at the end
-    #gene_pattern = r'(Soltu\.Des\.v1_[A-Za-z0-9\.]+\d+)[\*\+]?'
-    #gene_pattern = r'([A-Za-z0-9]+[._][A-Za-z0-9_]+\d+[A-Za-z0-9_.]*)[*+]?$'
-    #gene_pattern = r'([A-Za-z0-9._-]+)[*+]?$'
+
     gene_pattern = r'(\S+)$'
 
 
@@ -379,24 +241,36 @@ def remove_duplicates(df):
 
 def parse_gff(gff_file: str) -> pd.DataFrame:
     """Parse the GFF file to get all transcripts.
-
     Args:
         gff_file: Path to the GFF file
-
     Returns:
         DataFrame containing the parsed GFF data with transcript IDs
     """
     gff = pd.read_csv(gff_file, sep="\t", header=None, index_col=False, comment='#')
     gff.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
-    # Create a mask for mRNA or transcript types
+
+    # Extract transcript_id
     gff['transcript_id'] = np.where(
         gff['attributes'].str.contains('Parent='),
         gff['attributes'].str.extract(r'Parent=([^;]+)')[0],
         gff['attributes'].str.extract(r'ID=([^;]+)')[0]
     )
+
+    # First, extract gene_id for mRNA/transcript entries
+    gff['gene_id'] = np.where(
+        gff['type'].str.contains('mRNA|transcript'),
+        gff['attributes'].str.extract(r'geneID=([^;]+)')[0],
+        ''
+    )
+
+    # Create a mapping of transcript_id to gene_id for mRNA/transcript entries
+    transcript_to_gene = gff[gff['gene_id'] != ''].set_index('transcript_id')['gene_id'].to_dict()
+
+    # Propagate gene_id to all rows with the same transcript_id
+    gff['gene_id'] = gff['transcript_id'].map(transcript_to_gene).fillna('')
+
     print(gff)
     return gff
-
 
 def percent_func(pct: float, allvalues: np.ndarray) -> str:
     """Format percentage labels for pie charts.
@@ -462,6 +336,7 @@ def get_attribute_lengths(gff_file: str, attribute: str) -> pd.DataFrame:
     for feature in db.features_of_type(attribute):
         # Handle missing Parent attribute safely
         parent_id = feature.attributes.get('Parent', [None])[0]
+
         if parent_id is None:
             parent_id = feature.attributes.get('ID', [None])[0]
             #continue  # Skip if no parent ID found
@@ -651,7 +526,7 @@ def add_synteny_category(pangenes: pd.DataFrame) -> pd.DataFrame:
     pangenes_gene['syntenic_genes'] = syntenic_genes_parts.astype(str).agg(
         lambda x: ','.join(v for v in x if pd.notna(v) and v not in ['NA', 'N/A', '']), axis=1
     )
-
+    print(pangenes_gene)
     # Pivot the table for easier analysis
     pangenes_pivot = pd.melt(
         pangenes_gene,
@@ -697,7 +572,7 @@ def merge_pangenes_gff(pangenes_pivot: pd.DataFrame, gff: pd.DataFrame) -> pd.Da
 
     # Merge the DataFrames
     gff_pangenes = pd.merge(gff_mrna, pangenes_pivot, on='transcript_id', how='left')
-
+    print(gff_pangenes)
     # Convert synteny_category to string
     gff_pangenes['synteny_category'] = gff_pangenes['synteny_category'].astype(str)
 
@@ -1010,7 +885,8 @@ def main():
 
     # Process each attribute type
     print("Processing feature lengths...")
-    attributes = ['exon', 'CDS', 'five_prime_UTR', 'three_prime_UTR']
+    # attributes = ['exon', 'CDS', 'five_prime_UTR', 'three_prime_UTR']
+    attributes = ['exon', 'CDS']
     syntelogs_lengths_list = []
 
     for attribute in attributes:
@@ -1049,7 +925,13 @@ def main():
             'Synt_id_x', 'synteny_category', 'syntenic_genes', 'haplotype',
             'CDS_length_category', 'CDS_percent_difference', 'CDS_haplotype_with_longest_annotation'
         ]]
-
+        # add the gene_id from gff_pangenes to the final output
+        final_output = pd.merge(
+            final_output,
+            gff_pangenes[['transcript_id', 'gene_id']],
+            on='transcript_id',
+            how='left'
+        )
         final_output.rename(columns={'Synt_id_x': 'Synt_id'}, inplace=True)
         # print duplicated rows
         print(final_output[final_output.duplicated()])
@@ -1057,6 +939,8 @@ def main():
         # final_output = final_output.drop_duplicates()
         # print rows where transcript_id is duplicated
         print(final_output[final_output.index.duplicated()])
+        # set gene_id as index
+        final_output.set_index('gene_id', inplace=True)
         # Save to TSV file
         final_output.to_csv(f'{args.output}_categories.tsv', sep='\t', index=True)
 

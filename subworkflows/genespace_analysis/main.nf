@@ -1,7 +1,7 @@
 include { GENESPACE_INPUT_PREPERATION } from '../../modules/local/genespace/genespace_input_preperation'
 include { GENESPACE_RUN } from '../../modules/local/genespace/genespace_run'
 include { GENESPACE_PARSE } from '../../modules/local/genespace/genespace_parse'
-include { GFFREAD as GFFREAD_GFF } from '../../modules/local/gffread'
+include { GFFREAD as GFFREAD_GFF } from '../../modules/nf-core/gffread'
 
 workflow GENESPACE_ANALYSIS {
     take:

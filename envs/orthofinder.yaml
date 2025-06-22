@@ -1,7 +1,0 @@
-name: orthofinder
-channels:
-  - conda-forge
-  - bioconda
-  - default
-dependencies:
-  - orthofinder

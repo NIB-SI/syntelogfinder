@@ -1,4 +1,4 @@
-include { GFFREAD as GFFREAD_CDS}  from '../../modules/local/gffread' 
+include { GFFREAD as GFFREAD_CDS}  from '../../modules/nf-core/gffread'
 include { BLAST_MAKEBLASTDB} from '/scratch/nadjafn/modules/modules/nf-core/blast/makeblastdb'
 include { BLAST_BLASTN} from '/scratch/nadjafn/modules/modules/nf-core/blast/blastn'
 
@@ -7,7 +7,7 @@ workflow CDS_BLAST {
     take:
         gff             // GFF file from genespace parse
         fasta          // Input FASTA file
-    
+
     main:
         // Extract CDS sequences
         gffread_out = GFFREAD_CDS(
