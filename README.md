@@ -55,8 +55,7 @@ category grouping
 
 ### Plots
 
-![alt text](/scratch/nadjafn/potato-allelic-orthogroups/output_desiree_liftoff/03_GENESPACE/De_v1.unitato_liftoff_haplotap_genespace_pie_chart.svg)
-
+![alt text](image-1.png)
 
 
 
