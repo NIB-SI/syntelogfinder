@@ -55,7 +55,7 @@ category grouping
 
 ### Plots
 
-![alt text](image-1.png)
+![alt text](example_output/03_GENESPACE/De_v1.unitato_liftoff_haplotap_genespace_pie_chart.svg)
 
 
 
