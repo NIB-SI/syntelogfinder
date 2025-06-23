@@ -2,4 +2,15 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::orthofinder=2.5.5
+  - python=3.9
+  - gffutils
+  - pip
+  - pip:
+    - pandas
+    - matplotlib
+    - numpy
+    - seaborn
+    - argparse
+    - typing
+    - re
+    - collections

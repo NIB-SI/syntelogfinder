@@ -4,11 +4,9 @@ process EXTEND_GFF_FEATURES {
     tag "$meta.id"
     label 'process_low'
 
-    // conda "${moduleDir}/environment.yml"
-    conda "/users/nadjafn/.conda/envs/pyranges"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'oras://community.wave.seqera.io/library/python_pip_pyranges:b8b5027da61f0906' :
-        'quay.io/biocontainers/python:3.8' }"
+    conda "${moduleDir}/environment.yml"
+    //conda "/users/nadjafn/.conda/envs/pyranges"
+
 
     input:
     tuple val(meta), path(gff)

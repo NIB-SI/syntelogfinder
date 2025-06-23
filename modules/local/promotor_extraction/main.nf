@@ -3,10 +3,8 @@ process PROMOTOR_EXTRACTION {
     label 'process_low'
 
     conda "/users/nadjafn/.conda/envs/gffread"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-    'https://depot.galaxyproject.org/singularity/gffread:0.12.7--hdcf5f25_4' :
-    'biocontainers/gffread:0.12.7--hdcf5f25_4' }"
-    
+
+
     input:
     tuple val(synt_id), val(meta), path(promoter_gff_file), val(meta2), val(haplotypes), path(synt_file), path(genome_file)
 

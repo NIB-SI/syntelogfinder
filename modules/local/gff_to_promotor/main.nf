@@ -4,10 +4,8 @@ process GFF_TO_PROMOTER {
     tag "$meta.id"
     label 'process_low'
 
-    conda "/users/nadjafn/.conda/envs/pyranges"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'community.wave.seqera.io/library/pip_numpy_pyfaidx_pyranges:d084832c91636c20' :
-        'quay.io/biocontainers/bedtools:2.30.0--hc088bd4_0' }"
+    conda "${moduleDir}/environment.yml"
+
 
     input:
     tuple val(meta), path(gff_file)

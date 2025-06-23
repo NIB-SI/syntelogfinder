@@ -1,6 +1,8 @@
+name: pyranges
 channels:
   - conda-forge
   - bioconda
+  - defaults
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_gnu
@@ -51,6 +53,18 @@ dependencies:
   - jsonschema=4.23.0=pyhd8ed1ab_1
   - jsonschema-specifications=2024.10.1=pyhd8ed1ab_1
   - jsonschema-with-format-nongpl=4.23.0=hd8ed1ab_1
+  - jupyter=1.1.1=pyhd8ed1ab_1
+  - jupyter-lsp=2.2.5=pyhd8ed1ab_1
+  - jupyter_client=8.6.3=pyhd8ed1ab_1
+  - jupyter_console=6.6.3=pyhd8ed1ab_1
+  - jupyter_core=5.7.2=pyh31011fe_1
+  - jupyter_events=0.12.0=pyh29332c3_0
+  - jupyter_server=2.15.0=pyhd8ed1ab_0
+  - jupyter_server_terminals=0.5.3=pyhd8ed1ab_1
+  - jupyterlab=4.3.5=pyhd8ed1ab_0
+  - jupyterlab_pygments=0.3.0=pyhd8ed1ab_2
+  - jupyterlab_server=2.27.3=pyhd8ed1ab_1
+  - jupyterlab_widgets=3.0.13=pyhd8ed1ab_1
   - keyutils=1.6.1=h166bdaf_0
   - krb5=1.21.3=h659f571_0
   - ld_impl_linux-64=2.43=h712a8e2_4
@@ -85,6 +99,8 @@ dependencies:
   - ncls=0.0.68=py312h0fa9677_5
   - ncurses=6.5=h2d0b736_3
   - nest-asyncio=1.6.0=pyhd8ed1ab_1
+  - notebook=7.3.2=pyhd8ed1ab_0
+  - notebook-shim=0.2.4=pyhd8ed1ab_1
   - openssl=3.4.1=h7b32b05_0
   - overrides=7.7.0=pyhd8ed1ab_1
   - packaging=24.2=pyhd8ed1ab_2

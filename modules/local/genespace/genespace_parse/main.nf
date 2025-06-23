@@ -4,10 +4,9 @@ process GENESPACE_PARSE {
 
     cache 'lenient'
 
-    conda "/DKED/scratch/nadjafn/Phasing/ASE-tools-benchmark/conda/expressionMatrix-613c97c23a72e82e6de2bbc3b086d489"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'oras://community.wave.seqera.io/library/pandas_python_pip_argpar_pruned:72e2ed5052546765':
-        'biocontainers/gffread:0.12.7--hdcf5f25_4' }"
+    // conda "/DKED/scratch/nadjafn/Phasing/ASE-tools-benchmark/conda/expressionMatrix-613c97c23a72e82e6de2bbc3b086d489"
+    conda "${moduleDir}/environment.yml"
+
     input:
     tuple val(meta), val(haplotypes), path(pangenes), path(gff)
 

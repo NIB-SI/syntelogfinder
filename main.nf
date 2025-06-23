@@ -11,7 +11,7 @@ log.info """
 
 // Import processes from modules
 include { AGAT_spKeepLongestIsoform } from './modules/local/AGAT/spKeepLongestIsoform'
-include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED } from './modules/local/gffread'
+include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED } from './modules/nf-core/gffread'
 include { SPLIT_HAPLOTYPES } from './modules/local/Split_haplotypes'
 include { GENESPACE_ANALYSIS } from './subworkflows/genespace_analysis'
 include { PROMOTOR_COMPARISON } from './subworkflows/promotor_comparison'
@@ -92,29 +92,35 @@ workflow {
         log.info "Skipping CDS_BLAST subworkflow"
     }
 
-    genespace_ch.view()
-    // Define the synteny category you want to filter for
-    params.synteny_category = "1hap1_1hap2_1hap3_1hap4_s"
+    if (params.run_promotor_comparison) {
+        // Check if the Syntelog similarity module is enabled
+        log.info "Running Syntelog similarity module"
+        // Run Syntelog similarity module
+        genespace_ch.view()
+        // Define the synteny category you want to filter for
+        params.synteny_category = "1hap1_1hap2_1hap3_1hap4_s"
+        // Process the file and create a new channel with filtered Synt_ids
+        synt_id_ch = genespace_ch
+            .map { meta, haplotypes, file -> file }  // Extract just the file path
+            .splitCsv(sep: '\t', header: true)
+            .filter { row -> row.synteny_category == params.synteny_category }
+            .map { row -> row.Synt_id }
+            .unique()
+            .take(10)  // Take only the first 10 unique Synt_ids
+            .collect()
 
 
-    // Process the file and create a new channel with filtered Synt_ids
-    synt_id_ch = genespace_ch
-        .map { meta, haplotypes, file -> file }  // Extract just the file path
-        .splitCsv(sep: '\t', header: true)
-        .filter { row -> row.synteny_category == params.synteny_category }
-        .map { row -> row.Synt_id }
-        .unique()
-        .take(10)  // Take only the first 10 unique Synt_ids
-        .collect()
+        // View the results (for debugging)
+        synt_id_ch.view()
+        // Run Promotor comparision subworkflow
+        synt_id_ch = Channel.from(['Synt_id_15856','Synt_id_17129'])
 
+        promotor_summary = PROMOTOR_COMPARISON(agat_output.output_gff, fasta_ch, promotor_length, genespace_ch, synt_id_ch)
+        promotor_summary.view()
+    } else {
+        log.info "Skipping Promotor comparision subworkflow"
+    }
 
-    // View the results (for debugging)
-    synt_id_ch.view()
-    // Run Promotor comparision subworkflow
-    synt_id_ch = Channel.from(['Synt_id_15856','Synt_id_17129'])
-
-    promotor_summary = PROMOTOR_COMPARISON(agat_output.output_gff, fasta_ch, promotor_length, genespace_ch, synt_id_ch)
-    promotor_summary.view()
 }
 
 // Function to check if required parameters are set
