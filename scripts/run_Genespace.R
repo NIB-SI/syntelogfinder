@@ -51,8 +51,8 @@ pangenes <- query_pangenes(
 # Convert the result to a data frame
 pangenes <- as.data.frame(pangenes)
 
-# Select the hap1, hap2, hap3, and hap4 columns
-pangenes <- pangenes[, c("hap1", "hap2", "hap3", "hap4")]
+# Select the colummns starting with "hap"
+pangenes <- pangenes %>% select(starts_with("hap"))
 
 # Convert lists to comma-separated strings
 pangenes[] <- lapply(pangenes, function(col) {
