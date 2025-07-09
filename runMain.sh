@@ -9,3 +9,7 @@ nextflow run main.nf -resume -params-file params/desiree.json -with-conda -c con
 
 
 nextflow run main.nf -resume -params-file params/atlantic.json -with-conda -c conf/nextflow.config -profile conda
+
+
+# SWEEEET
+nextflow run main.nf -resume -params-file params/sweetpotato.json -c conf/nextflow.config -profile conda

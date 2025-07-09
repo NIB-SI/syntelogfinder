@@ -4,8 +4,8 @@ process GENESPACE_PARSE {
 
     cache 'lenient'
 
-    // conda "/DKED/scratch/nadjafn/Phasing/ASE-tools-benchmark/conda/expressionMatrix-613c97c23a72e82e6de2bbc3b086d489"
-    conda "${moduleDir}/environment.yml"
+    conda "/DKED/scratch/nadjafn/Phasing/ASE-tools-benchmark/conda/expressionMatrix-613c97c23a72e82e6de2bbc3b086d489"
+    // conda "${moduleDir}/environment.yml"
 
     input:
     tuple val(meta), val(haplotypes), path(pangenes), path(gff)

@@ -30,7 +30,7 @@ process GENESPACE_RUN {
     Rscript $baseDir/scripts/run_Genespace.R --working_dir $input_dir \
                                              --mcscanx_path $params.mcscanx_path \
                                              --ploidy 1 \
-                                             --ref_genome hap1 \
+                                             --ref_genome $ref_haplotype \
                                              --threads $task.cpus \
                                              --output $output_name
 

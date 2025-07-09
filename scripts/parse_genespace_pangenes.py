@@ -586,6 +586,7 @@ def make_pie_chart(gff_pangenes: pd.DataFrame, syntelogs_category: str, output_p
     output_prefix: Prefix for the output file
     """
     # Select only mRNA rows
+    #mrna_data = gff_pangenes[gff_pangenes['type'] == 'transcript'].copy()
     mrna_data = gff_pangenes[gff_pangenes['type'] == 'mRNA'].copy()
     # Sort by synteny category
     mrna_data = mrna_data.sort_values('synteny_category')

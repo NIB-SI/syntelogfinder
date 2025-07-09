@@ -1,0 +1,9 @@
+{
+    "reference_fasta": "/scratch/nadjafn/reference/sweetgains_beauregard/Beauregard_v4.asm.fa",
+    "reference_gff": "/scratch/nadjafn/reference/sweetgains_beauregard/Beauregard_v4.hc_gene_models.corrected.with_genes.gff3",
+    "ploidy": 6,
+    "outdir": "/DKED/scratch/nadjafn/potato-allelic-orthogroups/output_sweetpotato"
+}
+
+
+// gffread Beauregard_v4.hc_gene_models.corrected.gtf --keep-genes -F --keep-exon-attrs > Beauregard_v4.hc_gene_models.corrected.gff3

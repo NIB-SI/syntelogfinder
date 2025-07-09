@@ -20,7 +20,8 @@ process GENESPACE_INPUT_PREPERATION {
     for gff in $gff
     do
         grep "CDS" \$gff | cut -f1-4 > ${prefix}/bed/\$(basename "\${gff%.*}").bed
-        sed -i 's/\\(chr_\\?[0-9]\\+\\)_[0-9]\\+/\\1/g' ${prefix}/bed/\$(basename "\${gff%.*}").bed
+        # sed -i 's/\\(chr_\\?[0-9]\\+\\)_[0-9]\\+/\\1/g' ${prefix}/bed/\$(basename "\${gff%.*}").bed
+        sed -i 's/^\\([A-Za-z]*[Cc]hr_\\?[0-9]\\{2\\}\\)[^\\t]*/\\1/'  ${prefix}/bed/\$(basename "\${gff%.*}").bed
     done
 
     for fasta in $fasta

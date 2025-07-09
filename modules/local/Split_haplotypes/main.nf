@@ -2,17 +2,12 @@ process SPLIT_HAPLOTYPES {
     tag "$meta.id"
     label 'process_single'
 
-    // conda "${moduleDir}/environment.yml"
-    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-    //     'https://depot.galaxyproject.org/singularity/agat:1.4.0--pl5321hdfd78af_0' :
-    //     'biocontainers/agat:1.4.0--pl5321hdfd78af_0' }"
-
     input:
     tuple val(meta), path(gff)
 
     output:
     tuple val(meta), path("hap*.gff"), emit: output_gtf
-    path "versions.yml"           , emit: versions
+    path "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -20,20 +15,32 @@ process SPLIT_HAPLOTYPES {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def ploidy = task.ext.ploidy ?: 4
     """
-    for ((i=1; i<=$ploidy; i++)); do
-        grep -e "chr_\\?[0-9]\\+_\${i}" "$gff" > "hap\${i}.gff"
-        # add haplotype_suffic to gene-ids
+    # Extract unique haplotype suffixes from the GFF file
+    # This works for patterns like BrgdChr01A, BrgdChr01B, etc.
+    haplotypes=\$(grep -o 'BrgdChr[0-9]\\+[A-Z]' "$gff" | \\
+                 sed 's/.*\\([A-Z]\\)\$/\\1/' | \\
+                 sort -u)
 
-        # remove the _haplotype suffix on chr name
-        # sed 's/\\(chr[0-9]\\+\\)_[0-9]\\+/\\1/g' "hap\${i}_pre.gff" > "hap\${i}.gff"
+    # If no BrgdChr pattern found, try the original numeric pattern
+    if [[ -z "\$haplotypes" ]]; then
+        haplotypes=\$(seq 1 $params.ploidy)
+    fi
+    
+
+    # Split into haplotype-specific files
+    for hap in \$haplotypes; do
+        if [[ "\$hap" =~ ^[0-9]+\$ ]]; then
+            # Numeric haplotype (original pattern)
+            grep -e "chr_\\?[0-9]\\+_\${hap}" "$gff" > "hap\${hap}.gff"
+        else
+            # Letter-based haplotype (new pattern)
+            grep "BrgdChr[0-9]\\+\${hap}" "$gff" > "hap\${hap}.gff"
+        fi
     done
-
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-
     END_VERSIONS
     """
 
@@ -46,7 +53,7 @@ process SPLIT_HAPLOTYPES {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        agat: \$(agat_sp_keep_longest_isoform.pl --help | sed -n 's/.*(AGAT) - Version: \\(.*\\) .*/\\1/p')
+    agat: \$(agat_sp_keep_longest_isoform.pl --help | sed -n 's/.*(AGAT) - Version: \\(.*\\) .*/\\1/p')
     END_VERSIONS
     """
 }

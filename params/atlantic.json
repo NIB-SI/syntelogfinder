@@ -1,5 +1,6 @@
 {
     "reference_fasta": "/scratch/nadjafn/reference/Atlantic/ATL_v3.asm.fa",
     "reference_gff": "/scratch/nadjafn/reference/Atlantic/ATL_v3.hc_gene_models.repr.gff3",
+    "ploidy": 4,
     "outdir": "/DKED/scratch/nadjafn/potato-allelic-orthogroups/output_atlantic"
 }

@@ -1,6 +1,6 @@
 # potato-allelic-orthogroups
 
-Nextflow pipeline to group genes on polyploid phased assemblies that are orthologous and syntelogous based on GENESPACE.
+Nextflow pipeline to group genes on polyploid phased assemblies that are orthologous and syntelogous based on GENESPACE results.
 
 Requirements:
 
@@ -30,6 +30,7 @@ The parms.json should look like this
 {
     "reference_fasta": "genome.fa",
     "reference_gff": "annotation.gff",
+    "ploidy": 3,
     "outdir": "output_path"
 }
 ```
@@ -50,7 +51,7 @@ nextflow run main.nf -params-file params/params.json \
 
 ## Output
 
-category grouping
+category grouping in tsv file with information about CDS lenght difference.
 
 
 ### Plots
