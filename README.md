@@ -1,4 +1,5 @@
-# potato-allelic-orthogroups
+![smile](assets/syntelogfinder_diagramm.png)
+# syntelogfinder
 
 Nextflow pipeline to group genes on polyploid phased assemblies that are orthologous and syntelogous based on GENESPACE results.
 
