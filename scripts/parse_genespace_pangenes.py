@@ -239,37 +239,34 @@ def remove_duplicates(df):
     # Use Pandas' vectorized `map()` instead of `applymap()` for speed
     return df.map(process_cell)
 
+import pandas as pd
+import numpy as np
 def parse_gff(gff_file: str) -> pd.DataFrame:
-    """Parse the GFF file to get all transcripts.
-    Args:
-        gff_file: Path to the GFF file
-    Returns:
-        DataFrame containing the parsed GFF data with transcript IDs
-    """
     gff = pd.read_csv(gff_file, sep="\t", header=None, index_col=False, comment='#')
     gff.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
 
-    # Extract transcript_id
-    gff['transcript_id'] = np.where(
-        gff['attributes'].str.contains('Parent='),
-        gff['attributes'].str.extract(r'Parent=([^;]+)')[0],
-        gff['attributes'].str.extract(r'ID=([^;]+)')[0]
-    )
+    # Initialize transcript_id column
+    gff['transcript_id'] = ''
 
-    # First, extract gene_id for mRNA/transcript entries
+    # Extract transcript_id for mRNA/transcript entries (use ID)
+    mask_mrna = gff['type'].str.contains('mRNA|transcript', na=False)
+    gff.loc[mask_mrna, 'transcript_id'] = gff.loc[mask_mrna, 'attributes'].str.extract(r'ID=([^;]+)')[0]
+
+    # Extract transcript_id for exon/CDS entries (use Parent)
+    mask_features = gff['type'].str.contains('exon|CDS|five_prime_UTR|three_prime_UTR', na=False)
+    gff.loc[mask_features, 'transcript_id'] = gff.loc[mask_features, 'attributes'].str.extract(r'Parent=([^;]+)')[0]
+
+    # Extract gene_id for mRNA/transcript entries (use Parent)
     gff['gene_id'] = np.where(
-        gff['type'].str.contains('mRNA|transcript'),
-        gff['attributes'].str.extract(r'geneID=([^;]+)')[0],
+        gff['type'].str.contains('mRNA|transcript', na=False),
+        gff['attributes'].str.extract(r'Parent=([^;]+)')[0],
         ''
     )
 
-    # Create a mapping of transcript_id to gene_id for mRNA/transcript entries
+    # Create mapping and propagate
     transcript_to_gene = gff[gff['gene_id'] != ''].set_index('transcript_id')['gene_id'].to_dict()
-
-    # Propagate gene_id to all rows with the same transcript_id
     gff['gene_id'] = gff['transcript_id'].map(transcript_to_gene).fillna('')
 
-    print(gff)
     return gff
 
 def percent_func(pct: float, allvalues: np.ndarray) -> str:
@@ -329,8 +326,15 @@ def get_attribute_lengths(gff_file: str, attribute: str) -> pd.DataFrame:
 
     transcript_info = {}
 
+
+
     # Collect all transcript IDs in the GFF file
     all_transcripts = {feature.id for feature in db.features_of_type("mRNA")}
+
+    # if all_transcripts is empty, use all features of type "mRNA"
+    if not all_transcripts:
+        all_transcripts = {feature.id for feature in db.features_of_type("transcript")}
+
 
     # Iterate over all features of the specified type
     for feature in db.features_of_type(attribute):
@@ -564,7 +568,7 @@ def merge_pangenes_gff(pangenes_pivot: pd.DataFrame, gff: pd.DataFrame) -> pd.Da
         Merged DataFrame
     """
     # Select only mRNA from gff
-    gff_mrna = gff[gff['type'] == 'mRNA'].copy()
+    gff_mrna = gff[gff['type'] == 'mRNA|transcript'].copy()
 
     # Ensure transcript_id columns have the same type
     gff_mrna['transcript_id'] = gff_mrna['transcript_id'].astype(str)
