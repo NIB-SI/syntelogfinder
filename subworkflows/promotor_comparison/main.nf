@@ -1,4 +1,4 @@
-include { GFF_TO_PROMOTER } from '../../modules/local/gff_to_promotor'
+include { GFF_TO_PROMOTOR } from '../../modules/local/gff_to_promotor'
 include { PROMOTOR_EXTRACTION } from '../../modules/local/promotor_extraction'
 include { MINIMAP2_ALIGN } from '../../modules/nf-core/minimap2/align/'
 include { SVIM_ASM } from '../../modules/local/svim_asm/'
@@ -14,7 +14,7 @@ workflow PROMOTOR_COMPARISON {
         synt_ids_ch
 
     main:
-        promotor_gff = GFF_TO_PROMOTER(gff_file, fasta_ch, promotor_length)
+        promotor_gff = GFF_TO_PROMOTOR(gff_file, fasta_ch, promotor_length)
 
         // Combine the synt_ids with other inputs
         promotor_inputs = synt_ids_ch.flatten().combine(promotor_gff.gff)
