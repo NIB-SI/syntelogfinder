@@ -1,6 +1,6 @@
 // modules/gff_to_promoter.nf
 
-process GFF_TO_PROMOTER {
+process GFF_TO_PROMOTOR {
     tag "$meta.id"
     label 'process_low'
 
@@ -23,7 +23,7 @@ process GFF_TO_PROMOTER {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    python  /scratch/nadjafn/test_PROMOTOR_analysis/scripts/pormotor_extractor.py \
+    python ${baseDir}/scripts/promotor_extractor.py \
             --gff $gff_file \
             --fasta $genome_file \
             --output ${prefix}_promotor.gff \
