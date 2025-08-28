@@ -15,3 +15,7 @@ N0_short_dup.tsv
 scripts/gff.db
 **/output_*
 **/output
+promoter_df.csv
+.nextflow.pid
+extended_annotations.agat.log
+runMain.sh
