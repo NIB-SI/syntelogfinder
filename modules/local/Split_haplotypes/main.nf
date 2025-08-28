@@ -16,31 +16,31 @@ process SPLIT_HAPLOTYPES {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    # Extract unique haplotype suffixes from the GFF file
-    # This works for patterns like BrgdChr01A, BrgdChr01B, etc.
-    haplotypes=\$(grep -o 'BrgdChr[0-9]\\+[A-Z]' "$gff" | \\
-                 sed 's/.*\\([A-Z]\\)\$/\\1/' | \\
-                 sort -u)
+    # Extract unique haplotype suffixes from the GFF file.
+    haplotypes=\$(grep -o '[Cc]hr[0-9]\\+_\\?[A-Z0-9]' "$gff" | \
+    sed 's/.*\\([A-Z0-9]\\)\$/\\1/' | \
+    sort -u)
 
-    # If no BrgdChr pattern found, try the original numeric pattern
+    # If no Chr pattern found, try the original numeric pattern
     if [[ -z "\$haplotypes" ]]; then
         haplotypes=\$(seq 1 $params.ploidy)
     fi
-    
 
     # Split into haplotype-specific files
     for hap in \$haplotypes; do
+        echo \$hap
         if [[ "\$hap" =~ ^[0-9]+\$ ]]; then
             # Numeric haplotype (original pattern)
-            grep -e "chr_\\?[0-9]\\+_\${hap}" "$gff" > "hap\${hap}.gff"
+            grep "chr_\\?[0-9]\\+_\${hap}\\b" "$gff" > "hap\${hap}.gff"
         else
-            # Letter-based haplotype (new pattern)
-            grep "BrgdChr[0-9]\\+\${hap}" "$gff" > "hap\${hap}.gff"
+            # Alphanumeric haplotype (new pattern)
+            grep "[Cc]hr[0-9]\\+_\\?\${hap}\\b" "$gff" > "hap\${hap}.gff"
         fi
     done
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
+        grep: \$(grep --version | head -n1 | sed 's/.*[[:space:]]\\([0-9][0-9.]*\\).*/\\1/')
     END_VERSIONS
     """
 
@@ -53,7 +53,7 @@ process SPLIT_HAPLOTYPES {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-    agat: \$(agat_sp_keep_longest_isoform.pl --help | sed -n 's/.*(AGAT) - Version: \\(.*\\) .*/\\1/p')
+        grep: \$(grep --version | head -n1 | sed 's/.*[[:space:]]\\([0-9][0-9.]*\\).*/\\1/')
     END_VERSIONS
     """
 }
