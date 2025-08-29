@@ -598,7 +598,8 @@ def main():
 
         final_output = pangenes_pivot[[
             'Synt_id_x', 'synteny_category', 'syntenic_genes', 'haplotype',
-            'CDS_length_category', 'CDS_percent_difference', 'CDS_haplotype_with_longest_annotation'
+            'CDS_length_category', 'CDS_haplotype_with_longest_annotation',
+            'exon_length_category', 'exon_haplotype_with_longest_annotation'
         ]]
 
         final_output = pd.merge(
