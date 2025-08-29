@@ -17,7 +17,7 @@ option_list <- list(
               default = "hap1",
               help = "Reference genome for query_pangenes [default= %default]", metavar = "character"),
   make_option(c("-c", "--sameChr"), type = "logical",
-              default = TRUE,
+              default = FALSE,
               help = "Use only same chromosomes to find pangenes [default= %default]", metavar = "logical"),
   make_option(c("-t", "--threads"), type = "integer",
               default = 1,
