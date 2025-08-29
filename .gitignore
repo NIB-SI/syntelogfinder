@@ -19,3 +19,11 @@ promoter_df.csv
 .nextflow.pid
 extended_annotations.agat.log
 runMain.sh
+.nextflow.pid
+runMain.sh
+params/atlantic_with_liftoff.json
+params/atlantic.json
+params/wheatAK58.json
+params/atlantic.json
+params/atlantic_with_liftoff.json
+.nextflow.pid
