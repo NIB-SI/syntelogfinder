@@ -75,7 +75,7 @@ workflow {
     genespace_ch = GENESPACE_ANALYSIS(gffread_output, agat_output.output_gff)
 
     // Extend GFF features
-    extended_gff = EXTEND_GFF_FEATURES(gff_ch, fasta_ch)
+    // extended_gff = EXTEND_GFF_FEATURES(gff_ch, fasta_ch)
 
     if (params.run_blast) {
         // Check if the CDS_BLAST subworkflow is enabled
