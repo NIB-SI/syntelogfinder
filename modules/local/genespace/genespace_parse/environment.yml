@@ -12,5 +12,3 @@ dependencies:
     - seaborn
     - argparse
     - typing
-    - re
-    - collections
