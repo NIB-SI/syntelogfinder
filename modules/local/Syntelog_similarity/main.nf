@@ -4,7 +4,7 @@ process SYNTELOG_SIMILARITY {
     tag "$meta.id"
     label 'process_low'
 
-    conda "/DKED/scratch/nadjafn/Phasing/ASE-tools-benchmark/conda/expressionMatrix-613c97c23a72e82e6de2bbc3b086d489"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'oras://community.wave.seqera.io/library/pandas_python_pip_argpar_pruned:72e2ed5052546765':
         'biocontainers/gffread:0.12.7--hdcf5f25_4' }"
@@ -23,7 +23,7 @@ process SYNTELOG_SIMILARITY {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}_blast"
-    
+
 
     """
     python $projectDir/scripts/CDS_similarity_BLAST.py \\
@@ -31,7 +31,7 @@ process SYNTELOG_SIMILARITY {
         --syntenic_genes ${pangenes} \\
         --output ${prefix} \\
         $args
-    echo "Hello"
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
