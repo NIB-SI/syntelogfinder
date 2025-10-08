@@ -31,3 +31,4 @@ params/rice_Nip.json
 params/atlantic_with_liftoff.json
 params/atlantic.json
 runMain.sh
+.nextflow.pid

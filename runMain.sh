@@ -22,4 +22,8 @@ nextflow run main.nf -resume -params-file params/desiree_liftoff_bambu.json -c c
 nextflow run main.nf -resume -params-file params/sweetpotato.json -c conf/nextflow.config -profile conda
 
 # wheat
-nextflow run main.nf -resume -params-file params/wheatAK58.json -c conf/nextflow.config -profile conda
+nextflow run main.nf -resume -params-file params/wheatAK58.json -c conf/nextflow.config -profile conda --run_blast
+
+
+# rice
+nextflow run main.nf -resume -params-file params/rice_Nip.json -c conf/nextflow.config -profile conda --run_blast --mcscanx_path /DKED/scratch/nadjafn/MCScanX
