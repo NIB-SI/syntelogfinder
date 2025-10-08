@@ -462,7 +462,7 @@ def make_barplot(df: pd.DataFrame, attribute: str, ax: plt.Axes, haplotype_label
 
     ax.set_xlabel(f'{attribute} Length Category')
     ax.set_ylabel('Count')
-    ax.set_ylim(0, 25000)
+    ax.set_ylim(0, len(df) + 1)
     ax.tick_params(axis='x', rotation=90)
 
 def generate_combined_plots(df_list: List[pd.DataFrame], attributes: List[str], output_prefix: str) -> None:
