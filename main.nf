@@ -4,28 +4,29 @@ nextflow.enable.dsl = 2
 
 // Log pipeline information
 log.info """
-         Syntelog P I P E L I N E
+         SyntelogFinder
          ===================================
          """
          .stripIndent()
 
 // Import processes from modules
-include { AGAT_spKeepLongestIsoform } from './modules/local/AGAT/spKeepLongestIsoform'
-include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED } from './modules/nf-core/gffread'
-include { SPLIT_HAPLOTYPES } from './modules/local/Split_haplotypes'
-include { GENESPACE_ANALYSIS } from './subworkflows/genespace_analysis'
-include { PROMOTOR_COMPARISON } from './subworkflows/promotor_comparison'
-include { EXTEND_GFF_FEATURES } from './modules/local/extend_gff_features'
-include { CDS_BLAST } from './subworkflows/cds_blast'
-include { SYNTELOG_SIMILARITY } from './modules/local/Syntelog_similarity'
+include { AGAT_spKeepLongestIsoform                         } from './modules/local/AGAT/spKeepLongestIsoform'
+include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED   } from './modules/nf-core/gffread'
+include { SPLIT_HAPLOTYPES                                  } from './modules/local/Split_haplotypes'
+include { GENESPACE_ANALYSIS                                } from './subworkflows/genespace_analysis'
+include { PROMOTOR_COMPARISON                               } from './subworkflows/promotor_comparison'
+include { EXTEND_GFF_FEATURES                               } from './modules/local/extend_gff_features'
+include { TRANSCRIPT_BLAST                                  } from './subworkflows/transcript_blast'
+include { SYNTELOG_SIMILARITY                               } from './modules/local/Syntelog_similarity'
 
 // Define pipeline parameters
 
 
-    // Tool paths
-params.mcscanx_path = '/DKED/scratch/nadjafn/MCScanX'
 
-    // Config file
+
+
+
+// Config file
 params.config = "${baseDir}/conf/nextflow.config"
 
 
@@ -78,10 +79,10 @@ workflow {
     // extended_gff = EXTEND_GFF_FEATURES(gff_ch, fasta_ch)
 
     if (params.run_blast) {
-        // Check if the CDS_BLAST subworkflow is enabled
-        log.info "Running CDS_BLAST subworkflow"
-        // Run CDS BLAST subworkflow
-        blast_ch = CDS_BLAST(extended_gff.gff, haplotype_ch.map{it.fasta})
+        // Check if the TRANSCRIPT_BLAST subworkflow is enabled
+        log.info "Running TRANSCRIPT_BLAST subworkflow"
+        // Run TRANSCRIPT BLAST subworkflow
+        blast_ch = TRANSCRIPT_BLAST(agat_output.output_gff, haplotype_ch.map{it.fasta})
 
 
         SYNTELOG_SIMILARITY(
@@ -89,7 +90,7 @@ workflow {
         blast_ch.results)
 
     } else {
-        log.info "Skipping CDS_BLAST subworkflow"
+        log.info "Skipping TRANSCRIPT_BLAST subworkflow"
     }
 
     if (params.run_promotor_comparison) {
