@@ -5,8 +5,6 @@ process EXTEND_GFF_FEATURES {
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
-    //conda "/users/nadjafn/.conda/envs/pyranges"
-
 
     input:
     tuple val(meta), path(gff)
