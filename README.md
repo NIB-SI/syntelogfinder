@@ -61,3 +61,7 @@ category grouping in tsv file with information about CDS lenght difference.
 
 
 
+
+## Troubleshooting
+
+- if GENESPACE process is interuped, running with -resume flag will fail. To chace the other processes, delete the genespace work dir before resuming

@@ -1,5 +1,6 @@
 {
     "reference_fasta": "/scratch/nadjafn/reference/Desiree_v1/De_v1.fa",
     "reference_gff": "/scratch/nadjafn/reference/Desiree_v1/De_v1.unitato_liftoff_haplotap.gff3",
+    "ploidy": 4,
     "outdir": "/DKED/scratch/nadjafn/potato-allelic-orthogroups/output_desiree_liftoff"
 }
