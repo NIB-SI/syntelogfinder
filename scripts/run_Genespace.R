@@ -14,7 +14,7 @@ option_list <- list(
               default = 1,
               help = "Ploidy level [default= %default]", metavar = "integer"),
   make_option(c("-r", "--ref_genome"), type = "character",
-              default = "hap1",
+              default = "hap2",
               help = "Reference genome for query_pangenes [default= %default]", metavar = "character"),
   make_option(c("-c", "--sameChr"), type = "logical",
               default = FALSE,

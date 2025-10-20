@@ -332,7 +332,7 @@ def merge_pangenes_gff(pangenes_pivot: pd.DataFrame, gff: pd.DataFrame) -> pd.Da
     if 'mRNA' in gff['type'].values:
         gff_mrna = gff[gff['type'] == 'mRNA'].copy()
     else:
-        gff_mrna = gff[gff['type'] == ['transcript']].copy()
+        gff_mrna = gff[gff['type'] == 'transcript'].copy()
 
     # Ensure consistent data types
     gff_mrna['transcript_id'] = gff_mrna['transcript_id'].astype(str)

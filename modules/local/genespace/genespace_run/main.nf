@@ -25,7 +25,7 @@ process GENESPACE_RUN {
     def args        = task.ext.args             ?: ''
     def prefix      = task.ext.prefix           ?: "${meta.id}_genespace"
     def output_name = "${prefix}.tsv"
-    def ref_haplotype = haplotypes[0]
+    def ref_haplotype = haplotypes[1]
     """
     Rscript $baseDir/scripts/run_Genespace.R --working_dir $input_dir \
                                              --mcscanx_path $params.mcscanx_path \

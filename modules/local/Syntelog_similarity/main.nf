@@ -30,6 +30,7 @@ process SYNTELOG_SIMILARITY {
         --blast ${blast_file} \\
         --syntenic_genes ${pangenes} \\
         --output ${prefix} \\
+        --ploidy ${params.ploidy} \\
         $args
 
     cat <<-END_VERSIONS > versions.yml

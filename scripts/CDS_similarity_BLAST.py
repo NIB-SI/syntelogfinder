@@ -13,6 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Dict, List, Tuple
 from pathlib import Path
+import math
 
 
 def parse_arguments():
@@ -21,6 +22,7 @@ def parse_arguments():
     parser.add_argument('-b', '--blast', help='BLAST all-vs-all output file (fmt6)', required=True)
     parser.add_argument('-s', '--syntenic_genes', help='TSV file with syntenic genes', required=True)
     parser.add_argument('-o', '--output_prefix', help='Prefix for output files', required=True)
+    parser.add_argument('--ploidy', help='Ploidy level', type=int, default=4)
 
     return parser.parse_args()
 
@@ -162,7 +164,7 @@ def categorize_sequence_similarity(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.D
     return grouped, identical_matches
 
 
-def assign_allele_categories(df: pd.DataFrame) -> pd.DataFrame:
+def assign_allele_categories(df: pd.DataFrame, ploidy) -> pd.DataFrame:
     """
     Assign allele categories based on the number of identical combinations.
 
@@ -172,14 +174,35 @@ def assign_allele_categories(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with allele categories
     """
-    # Map counts to meaningful categories
-    category_map = {
-        0: 'all_alleles_different',
-        1: '2_alleles_identical',
-        2: '2x2_alleles_identical',
-        3: '3_alleles_identical',
-        6: '4_alleles_identical'
-    }
+  
+    # Map counts to meaningful categories based on ploidy
+    if ploidy == 4:
+        category_map = {
+            0: 'all_alleles_different',
+            1: '2_alleles_identical',
+            2: '2x2_alleles_identical',
+            3: '3_alleles_identical',
+            6: '4_alleles_identical'
+        }
+    if ploidy != 4:
+        category_map = {
+            0: 'all_alleles_different',
+            1: '2_alleles_identical',
+            2: '2x2_alleles_identical',
+            3: '3_alleles_identical',
+            6: '4_alleles_identical',
+            10: '5_alleles_identical',
+            15: '6_alleles_identical',
+            21: '7_alleles_identical',
+            28: '8_alleles_identical',
+            36: '9_alleles_identical',
+            45: '10_alleles_identical',
+            55: '11_alleles_identical',
+            66: '12_alleles_identical',
+        }
+
+ 
+    
 
     df['category'] = 'no_cat'
     for count, category in category_map.items():
@@ -269,7 +292,7 @@ def main():
 
     # Step 5: Assign allele categories
     print("Assigning allele categories...")
-    categorized_identical = assign_allele_categories(identical_matches)
+    categorized_identical = assign_allele_categories(identical_matches, args.ploidy)
 
     # Step 6: Add categories to the main dataset
     merged_with_categories = pd.merge(
