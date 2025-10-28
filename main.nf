@@ -19,12 +19,6 @@ include { EXTEND_GFF_FEATURES                               } from './modules/lo
 include { TRANSCRIPT_BLAST                                  } from './subworkflows/transcript_blast'
 include { SYNTELOG_SIMILARITY                               } from './modules/local/Syntelog_similarity'
 
-// Define pipeline parameters
-
-
-
-
-
 
 // Config file
 params.config = "${baseDir}/conf/nextflow.config"

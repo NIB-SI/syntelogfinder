@@ -14,7 +14,7 @@ process SYNTELOG_SIMILARITY {
 
     output:
     tuple val(meta), val(haplotypes), path("${prefix}*_analysis.tsv"), emit: blast_pangenes
-    tuple val(meta), path("${prefix}*.png"), emit: plots
+    tuple val(meta), path("${prefix}*.svg"), emit: plots
     path "versions.yml", emit: versions
 
     when:

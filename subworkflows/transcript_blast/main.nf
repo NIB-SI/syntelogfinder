@@ -1,6 +1,6 @@
 include { GFFREAD as GFFREAD_TRANSCRIPT }  from '../../modules/nf-core/gffread'
-include { BLAST_MAKEBLASTDB             } from '/scratch/nadjafn/modules/modules/nf-core/blast/makeblastdb'
-include { BLAST_BLASTN                  } from '/scratch/nadjafn/modules/modules/nf-core/blast/blastn'
+include { BLAST_MAKEBLASTDB             } from '../../modules/nf-core/blast/makeblastdb'
+include { BLAST_BLASTN                  } from '../../modules/nf-core/blast/blastn'
 
 
 workflow TRANSCRIPT_BLAST {

@@ -236,7 +236,7 @@ def create_visualizations(data: Dict[str, pd.DataFrame], output_prefix: str) -> 
                 ha='center', va='bottom')
 
     plt.tight_layout()
-    plt.savefig(f'{output_prefix}_allele_categories.png', dpi=300)
+    plt.savefig(f'{output_prefix}_allele_categories.svg', dpi=300)
     plt.close()
 
     # Plot SNP histogram
@@ -254,7 +254,7 @@ def create_visualizations(data: Dict[str, pd.DataFrame], output_prefix: str) -> 
         plt.title('Distribution of SNPs in Syntenic Genes')
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
-        plt.savefig(f'{output_prefix}_SNP_distribution.png', dpi=300)
+        plt.savefig(f'{output_prefix}_SNP_distribution.svg', dpi=300)
         plt.close()
 
 

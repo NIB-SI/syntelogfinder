@@ -352,9 +352,9 @@ def make_pie_chart(gff_pangenes: pd.DataFrame, syntelogs_category: str, output_p
     """Create a pie chart showing distribution of synteny categories."""
     mrna_data = gff_pangenes[gff_pangenes['type'].isin(['mRNA', 'transcript'])].copy()
     mrna_data = mrna_data.sort_values('synteny_category')
-
+    # group by gene_id to avoid double counting of isoforms
+    mrna_data = mrna_data.drop_duplicates(subset=['gene_id'])
     synt_counts = mrna_data['synteny_category'].value_counts()
-
 
     # Get top 7 categories and group the rest as "other"
     synt_counts_top = synt_counts[:7].copy()
