@@ -3,6 +3,9 @@
 
 Nextflow pipeline to group genes on polyploid phased assemblies that are orthologous and syntelogous based on GENESPACE results.
 
+
+# Getting started
+
 Requirements:
 
 - nextflow
@@ -46,8 +49,10 @@ nextflow run main.nf -params-file params/params.json \
 ```
 
 
+### Tutorial
 
-
+- [Running syntelogfinder on phased reference of diplpid rice](https://polyase.readthedocs.io/en/latest/tutorial_rice.html)
+- [Running syntelogfinder on phased reference of haxaploid wheat](https://polyase.readthedocs.io/en/latest/tutorial.html)
 
 
 ## Output
