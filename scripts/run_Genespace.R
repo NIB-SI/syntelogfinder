@@ -71,4 +71,3 @@ write.table(pangenes, file = opt$output , sep = "\t", quote = FALSE, row.names =
 
 # Print the result
 print(head(pangenes))
-

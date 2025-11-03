@@ -1,0 +1,32 @@
+{
+  "name": "SyntelogFinder",
+  "homePage": "",
+  "repos": {
+    "https://github.com/nf-core/modules.git": {
+      "modules": {
+        "nf-core": {
+          "agat/spkeeplongestisoform": {
+            "branch": "master",
+            "git_sha": "55ed5f4aabcdcd7a4cc44e1700f956756c7e8532",
+            "installed_by": ["modules"]
+          },
+          "blast/blastn": {
+            "branch": "master",
+            "git_sha": "d46ce1891502bcf54c434d50d9a33ffe611beb19",
+            "installed_by": ["modules"]
+          },
+          "blast/makeblastdb": {
+            "branch": "master",
+            "git_sha": "6330227ba2a71d39f35b0ef60e381f456489c6ee",
+            "installed_by": ["modules"]
+          },
+          "gffread": {
+            "branch": "master",
+            "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+            "installed_by": ["modules"]
+          }
+        }
+      }
+    }
+  }
+}

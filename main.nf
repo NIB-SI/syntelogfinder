@@ -10,7 +10,7 @@ log.info """
          .stripIndent()
 
 // Import processes from modules
-include { AGAT_spKeepLongestIsoform                         } from './modules/local/AGAT/spKeepLongestIsoform'
+include { AGAT_spKeepLongestIsoform                         } from './modules/nf-core/AGAT/spKeepLongestIsoform'
 include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED   } from './modules/nf-core/gffread'
 include { SPLIT_HAPLOTYPES                                  } from './modules/local/Split_haplotypes'
 include { GENESPACE_ANALYSIS                                } from './subworkflows/genespace_analysis'
@@ -21,7 +21,7 @@ include { SYNTELOG_SIMILARITY                               } from './modules/lo
 
 
 // Config file
-params.config = "${baseDir}/conf/nextflow.config"
+// params.config = "${baseDir}/conf/nextflow.config"
 
 
 // Create input channels

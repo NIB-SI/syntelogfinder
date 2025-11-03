@@ -35,4 +35,3 @@ process GENESPACE_INPUT_PREPERATION {
     """
 
 }
-

@@ -174,7 +174,7 @@ def assign_allele_categories(df: pd.DataFrame, ploidy) -> pd.DataFrame:
     Returns:
         DataFrame with allele categories
     """
-  
+
     # Map counts to meaningful categories based on ploidy
     if ploidy == 4:
         category_map = {
@@ -201,8 +201,8 @@ def assign_allele_categories(df: pd.DataFrame, ploidy) -> pd.DataFrame:
             66: '12_alleles_identical',
         }
 
- 
-    
+
+
 
     df['category'] = 'no_cat'
     for count, category in category_map.items():

@@ -38,4 +38,3 @@ process GENESPACE_RUN {
     """
 
 }
-

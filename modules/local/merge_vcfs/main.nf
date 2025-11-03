@@ -26,7 +26,7 @@ process MERGE_VCFS {
     grep --no-filename "##contig" $vcf_file_list | sort | uniq >> ${prefix}_all_variants.vcf
     echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSample" >> ${prefix}_all_variants.vcf
     grep --no-messages --no-filename -v "#" $vcf_file_list >> ${prefix}_all_variants.vcf || true
-    
+
     cat <<-END_VERSIONS > versions.yml
     "PROMOTOR_COMPARISON:MERGE_VCFS":
         bash: \$(bash --version | sed '1!d; s/.*version \\(.*\\)/\\1/')

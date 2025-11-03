@@ -21,7 +21,7 @@ process SVIM_ASM {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id.id}_${meta.original_query}_${meta.original_reference}"
-    
+
 
     """
     # Run SVIM-ASM

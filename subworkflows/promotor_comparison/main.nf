@@ -91,5 +91,3 @@ workflow PROMOTOR_COMPARISON {
         emit:
             summary = VCF_TO_SUMMARY.out.summary
 }
-
-
