@@ -10,7 +10,7 @@ log.info """
          .stripIndent()
 
 // Import processes from modules
-include { AGAT_spKeepLongestIsoform                         } from './modules/nf-core/AGAT/spKeepLongestIsoform'
+include { AGAT_SPKEEPLONGESTISOFORM                         } from './modules/nf-core/agat/spkeeplongestisoform'
 include { GFFREAD as GFFREAD_PROT; GFFREAD as GFFREAD_BED   } from './modules/nf-core/gffread'
 include { SPLIT_HAPLOTYPES                                  } from './modules/local/Split_haplotypes'
 include { GENESPACE_ANALYSIS                                } from './subworkflows/genespace_analysis'
@@ -21,7 +21,7 @@ include { SYNTELOG_SIMILARITY                               } from './modules/lo
 
 
 // Config file
-// params.config = "${baseDir}/conf/nextflow.config"
+params.config = "nextflow.config"
 
 
 // Create input channels
@@ -35,13 +35,14 @@ promotor_length = Channel.from([3000])
 // Main workflow
 workflow {
     // Keep longest isoform
-    agat_output = AGAT_spKeepLongestIsoform(gff_ch)
-
+    agat_output = AGAT_SPKEEPLONGESTISOFORM(gff_ch,
+                                            [])
     // Split GFF into haplotypes
-    split_gff = SPLIT_HAPLOTYPES(agat_output.output_gff)
+    split_gff = SPLIT_HAPLOTYPES(
+                              AGAT_SPKEEPLONGESTISOFORM.out.gff)
 
     // Prepare haplotype channels
-    haplotype_ch = split_gff.output_gtf
+    haplotype_ch = SPLIT_HAPLOTYPES.out.output_gtf
         .transpose()
         .combine(fasta_ch)
         .map { meta, gff, fasta ->
@@ -67,7 +68,7 @@ workflow {
         .groupTuple(by: 0)
 
     // GENESPACE Analysis
-    genespace_ch = GENESPACE_ANALYSIS(gffread_output, agat_output.output_gff)
+    genespace_ch = GENESPACE_ANALYSIS(gffread_output, AGAT_SPKEEPLONGESTISOFORM.out.gff)
 
     // Extend GFF features
     // extended_gff = EXTEND_GFF_FEATURES(gff_ch, fasta_ch)
@@ -76,7 +77,7 @@ workflow {
         // Check if the TRANSCRIPT_BLAST subworkflow is enabled
         log.info "Running TRANSCRIPT_BLAST subworkflow"
         // Run TRANSCRIPT BLAST subworkflow
-        blast_ch = TRANSCRIPT_BLAST(agat_output.output_gff, haplotype_ch.map{it.fasta})
+        blast_ch = TRANSCRIPT_BLAST(AGAT_SPKEEPLONGESTISOFORM.out.gff, haplotype_ch.map{it.fasta})
 
 
         SYNTELOG_SIMILARITY(
@@ -110,7 +111,7 @@ workflow {
         // Run Promotor comparision subworkflow
         synt_id_ch = Channel.from(['Synt_id_15856','Synt_id_17129'])
 
-        promotor_summary = PROMOTOR_COMPARISON(agat_output.output_gff, fasta_ch, promotor_length, genespace_ch, synt_id_ch)
+        promotor_summary = PROMOTOR_COMPARISON(AGAT_SPKEEPLONGESTISOFORM.out.gff, fasta_ch, promotor_length, genespace_ch, synt_id_ch)
         promotor_summary.view()
     } else {
         log.info "Skipping Promotor comparision subworkflow"
