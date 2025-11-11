@@ -4,8 +4,12 @@ process GENESPACE_PARSE {
 
     cache 'lenient'
 
-    // conda "/DKED/scratch/nadjafn/Phasing/ASE-tools-benchmark/conda/expressionMatrix-613c97c23a72e82e6de2bbc3b086d489"
     conda "${moduleDir}/environment.yml"
+
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'oras://community.wave.seqera.io/library/pip_argparse_gffutils_matplotlib_pruned:acaa38c7b16e2893' :
+        'community.wave.seqera.io/library/pip_argparse_gffutils_matplotlib_pruned:3c48a85c80b84759' }"
+
 
     input:
     tuple val(meta), val(haplotypes), path(pangenes), path(gff)
@@ -24,7 +28,7 @@ process GENESPACE_PARSE {
     def haplotypes_arg = haplotypes.sort().collect { "1${it}" }.join('_') + '_s'
 
     """
-    python $projectDir/scripts/parse_genespace_pangenes.py \\
+    parse_genespace_pangenes.py \\
         --pangenes $pangenes \\
         --gff $gff \\
         --output ${prefix} \\

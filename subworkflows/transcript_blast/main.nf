@@ -16,18 +16,20 @@ workflow TRANSCRIPT_BLAST {
         )
 
         // Build BLAST database
-        blast_db = BLAST_MAKEBLASTDB(
+        BLAST_MAKEBLASTDB(
             gffread_out.gffread_fasta
         )
 
         // Run BLAST analysis
         blast_results = BLAST_BLASTN(
             gffread_out.gffread_fasta,
-            blast_db.db
+            BLAST_MAKEBLASTDB.out.db,
+            Channel.empty(),
+            Channel.empty(),
+            Channel.empty()
         )
 
     emit:
         cds_fasta = gffread_out.gffread_fasta
-        blast_db  = blast_db.db
         results   = blast_results.txt
 }

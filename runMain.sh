@@ -11,7 +11,7 @@ nextflow run main.nf -resume -params-file params/desiree.json -with-conda -c con
 nextflow run main.nf -resume -params-file params/atlantic.json -with-conda -c conf/nextflow.config -profile conda
 
 # Atlantic with liftoff
-nextflow run main.nf -resume -params-file params/atlantic_liftoff.json -c conf/nextflow.config -profile conda --run_blast --mcscanx_path /DKED/scratch/nadjafn/MCScanX
+nextflow run main.nf -resume -params-file params/atlantic_with_liftoff.json -c nextflow.config -profile conda --run_blast --mcscanx_path /DKED/scratch/nadjafn/MCScanX
 
 
 
@@ -27,4 +27,4 @@ nextflow run main.nf -resume -params-file params/wheatAK58.json -c conf/nextflow
 
 
 # rice
-nextflow run main.nf -resume -params-file params/rice_Nip.json -c conf/nextflow.config -profile conda --run_blast --mcscanx_path /DKED/scratch/nadjafn/MCScanX
+nextflow run main.nf -resume -params-file params/rice_Nip.json  -profile singularity --run_blast --mcscanx_path /DKED/scratch/nadjafn/MCScanX

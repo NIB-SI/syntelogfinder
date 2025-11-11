@@ -4,12 +4,14 @@ process GENESPACE_RUN {
 
     cache 'lenient'
 
-    // conda "${moduleDir}/environment.yml"
-    conda "/users/nadjafn/.conda/envs/genespace-env"
+    conda "${moduleDir}/environment.yml"
+    //conda "/users/nadjafn/.conda/envs/genespace-env"
     // https://github.com/HuffordLab-Containers/genespace_docker/blob/main/Dockerfile
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/gffread:0.12.7--hdcf5f25_4' :
-        'biocontainers/gffread:0.12.7--hdcf5f25_4' }"
+        'docker://doejgi/genespace:latest' :
+        'doejgi/genespace:latest' }"
+    // Problem optparse and library(dplyr) not in conatiner
+
 
     input:
     tuple val(meta), val(haplotypes), path(fasta), path(gff), path(input_dir)
@@ -26,8 +28,9 @@ process GENESPACE_RUN {
     def prefix      = task.ext.prefix           ?: "${meta.id}_genespace"
     def output_name = "${prefix}.tsv"
     def ref_haplotype = haplotypes[1]
+
     """
-    Rscript $baseDir/scripts/run_Genespace.R --working_dir $input_dir \
+    run_Genespace.R --working_dir $input_dir \
                                              --mcscanx_path $params.mcscanx_path \
                                              --ploidy 1 \
                                              --ref_genome $ref_haplotype \

@@ -14,7 +14,7 @@ Requirements:
 
 The following packages are not in bioconda/pip so need to be installed manually:
 - McxScan (follow instructions [here](/scratch/nadjafn/potato-allelic-orthogroups/modules/local/genespace/genespace_run/environment.yml) and provide path to installation to --mcscanx_path)
-- GENESPACE ([instructions](https://github.com/jtlovell/GENESPACE?tab=readme-ov-file#2-software-installation))(in side the conda env genespace-env (potato-allelic-orthogroups/modules/local/genespace/genespace_run/environment.yml))
+- GENESPACE ([instructions](https://github.com/jtlovell/GENESPACE?tab=readme-ov-file#2-software-installation))(in side the conda environment genespace-env (syntelogfinder/modules/local/genespace/genespace_run/environment.yml))
 
 minimal input:
 - parameter file (params.json)
@@ -39,7 +39,7 @@ The parms.json should look like this
 }
 ```
 
-Run like this:
+Run like this (after cloning the repository):
 ```
 nextflow run main.nf -params-file params/params.json \
                      -c cond/nextflow.config \
