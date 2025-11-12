@@ -1,0 +1,6 @@
+{
+    "reference_fasta": "genome.fa",
+    "reference_gff": "annotation.gff",
+    "ploidy": 3,
+    "outdir": "output_path"
+}
