@@ -17,18 +17,31 @@ The following packages are not in bioconda/pip so need to be installed manually 
 - GENESPACE ([instructions](https://github.com/jtlovell/GENESPACE?tab=readme-ov-file#2-software-installation))(inside the conda environment genespace-env (syntelogfinder/modules/local/genespace/genespace_run/environment.yml))
 
 
-minimal input:
+### minimal input:
 - parameter file (params.json)
 - genome fasta of phased reference (chromosome names like this: >chr[_]01_1, >chr[_]01_2 Where the _suffix is the haplotype )
-- gff with CDS corresponding to the reference (same chromosome names!)
+- gff or gtf with CDS corresponding to the reference (same chromosome names!)
 
 The gff file should look like this https://agat.readthedocs.io/en/latest/gff_to_gtf.html#the-gff-file-to-convert
 with the following features:
 
 - gene
-- mRNA
+- mRNA/transcript
 - exon
 - CDS
+
+Or a gtf file with the following features:
+
+- gene
+- mRNA/transcript
+- exon
+- CDS
+
+Mandatory Attributes
+
+- gene_id - must be present on ALL lines
+- transcript_id - required for transcript, exon, CDS features
+- Parent - links child features to parent 
 
 The parms.json should look like this
 ```
