@@ -8,8 +8,10 @@ process GENESPACE_RUN {
     //conda "/users/nadjafn/.conda/envs/genespace-env"
     // https://github.com/HuffordLab-Containers/genespace_docker/blob/main/Dockerfile
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://arnstrm2/genespace:1.1.4' :
-        'arnstrm2/genespace:1.1.4' }"
+        'docker://bioyoshoo/genespace:v1.0' :
+        'bioyoshoo/genespace:v1.0'}"
+
+
     // Problem optparse and library(dplyr) not in conatiner
 
 

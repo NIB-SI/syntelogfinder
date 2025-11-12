@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 library(GENESPACE)
 library(dplyr)
 library(optparse)
