@@ -1,36 +1,55 @@
 #!/usr/bin/env Rscript
 library(GENESPACE)
-library(dplyr)
-library(optparse)
 
-# Define command-line arguments
-option_list <- list(
-  make_option(c("-w", "--working_dir"), type = "character",
-              default = "/scratch/nadjafn/potato-allelic-orthogroups/results/input_genespace/",
-              help = "Working directory [default= %default]", metavar = "character"),
-  make_option(c("-m", "--mcscanx_path"), type = "character",
-              default = "/scratch/nadjafn/MCScanX",
-              help = "Path to MCScanX [default= %default]", metavar = "character"),
-  make_option(c("-p", "--ploidy"), type = "integer",
-              default = 1,
-              help = "Ploidy level [default= %default]", metavar = "integer"),
-  make_option(c("-r", "--ref_genome"), type = "character",
-              default = "hap2",
-              help = "Reference genome for query_pangenes [default= %default]", metavar = "character"),
-  make_option(c("-c", "--sameChr"), type = "logical",
-              default = FALSE,
-              help = "Use only same chromosomes to find pangenes [default= %default]", metavar = "logical"),
-  make_option(c("-t", "--threads"), type = "integer",
-              default = 1,
-              help = "Number of cores for running genespace", metavar = "integer"),
-  make_option(c("-o", "--output"), type = "character",
-              default = "test.tsv",
-              help = "Output of pangenes [default= %default]", metavar = "character")
-)
+# Function to parse command-line arguments
+parse_args <- function() {
+  args <- commandArgs(trailingOnly = TRUE)
+
+  # Default values
+  params <- list(
+    working_dir = "missing",
+    mcscanx_path = "missing",
+    ploidy = 1,
+    ref_genome = "hap1",
+    sameChr = FALSE,
+    threads = 1,
+    output = "test.tsv"
+  )
+
+  # Parse arguments
+  i <- 1
+  while (i <= length(args)) {
+    if (args[i] %in% c("-w", "--working_dir")) {
+      params$working_dir <- args[i + 1]
+      i <- i + 2
+    } else if (args[i] %in% c("-m", "--mcscanx_path")) {
+      params$mcscanx_path <- args[i + 1]
+      i <- i + 2
+    } else if (args[i] %in% c("-p", "--ploidy")) {
+      params$ploidy <- as.integer(args[i + 1])
+      i <- i + 2
+    } else if (args[i] %in% c("-r", "--ref_genome")) {
+      params$ref_genome <- args[i + 1]
+      i <- i + 2
+    } else if (args[i] %in% c("-c", "--sameChr")) {
+      params$sameChr <- as.logical(args[i + 1])
+      i <- i + 2
+    } else if (args[i] %in% c("-t", "--threads")) {
+      params$threads <- as.integer(args[i + 1])
+      i <- i + 2
+    } else if (args[i] %in% c("-o", "--output")) {
+      params$output <- args[i + 1]
+      i <- i + 2
+    } else {
+      i <- i + 1
+    }
+  }
+
+  return(params)
+}
 
 # Parse command-line arguments
-opt_parser <- OptionParser(option_list = option_list)
-opt <- parse_args(opt_parser)
+opt <- parse_args()
 
 # Initialize GENESPACE parameters
 gpar <- init_genespace(
@@ -52,8 +71,9 @@ pangenes <- query_pangenes(
 # Convert the result to a data frame
 pangenes <- as.data.frame(pangenes)
 
-# Select the colummns starting with "hap"
-pangenes <- pangenes %>% select(starts_with("hap"))
+# Select the columns starting with "hap" (without dplyr)
+hap_cols <- grep("^hap", names(pangenes), value = TRUE)
+pangenes <- pangenes[, hap_cols, drop = FALSE]
 
 # Convert lists to comma-separated strings
 pangenes[] <- lapply(pangenes, function(col) {
@@ -68,7 +88,7 @@ pangenes[] <- lapply(pangenes, function(col) {
 pangenes[pangenes == ""] <- NA
 
 # Write the data frame to a file
-write.table(pangenes, file = opt$output , sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(pangenes, file = opt$output, sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Print the result
 print(head(pangenes))

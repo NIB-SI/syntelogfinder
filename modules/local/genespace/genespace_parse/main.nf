@@ -7,8 +7,8 @@ process GENESPACE_PARSE {
     conda "${moduleDir}/environment.yml"
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'oras://community.wave.seqera.io/library/pip_argparse_gffutils_matplotlib_pruned:acaa38c7b16e2893' :
-        'community.wave.seqera.io/library/pip_argparse_gffutils_matplotlib_pruned:3c48a85c80b84759' }"
+        'community.wave.seqera.io/library/pip_argparse_gffutils_matplot_pruned:3b26a631aedc4256' :
+        'community.wave.seqera.io/library/pip_argparse_gffutils_matplot_pruned:3b26a631aedc4256' }"
 
 
     input:
