@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # load packages
 import pandas as pd
 import gffutils

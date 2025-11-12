@@ -4,7 +4,7 @@
 Nextflow pipeline to group genes on polyploid phased assemblies that are orthologous and syntelogous based on GENESPACE results.
 
 
-# Getting started
+## Getting started
 
 Requirements:
 
@@ -12,9 +12,10 @@ Requirements:
 
 - conda
 
-The following packages are not in bioconda/pip so need to be installed manually:
+The following packages are not in bioconda/pip so need to be installed manually if running with `--profile conda` (for singularity this is not necessary):
 - McxScan (follow instructions [here](/scratch/nadjafn/potato-allelic-orthogroups/modules/local/genespace/genespace_run/environment.yml) and provide path to installation to --mcscanx_path)
-- GENESPACE ([instructions](https://github.com/jtlovell/GENESPACE?tab=readme-ov-file#2-software-installation))(in side the conda environment genespace-env (syntelogfinder/modules/local/genespace/genespace_run/environment.yml))
+- GENESPACE ([instructions](https://github.com/jtlovell/GENESPACE?tab=readme-ov-file#2-software-installation))(inside the conda environment genespace-env (syntelogfinder/modules/local/genespace/genespace_run/environment.yml))
+
 
 minimal input:
 - parameter file (params.json)
@@ -43,11 +44,20 @@ Run like this (after cloning the repository):
 ```
 nextflow run main.nf -params-file params/params.json \
                      -c cond/nextflow.config \
-                     -profile conda \
-                     --mcscanx_path [path to MCScanX folder] \
+                     -profile singularity \
                      -resume
 ```
 
+or with conda
+
+
+```
+nextflow run main.nf -params-file params/params.json \
+                     -c cond/nextflow.config \
+                     -profile singularity \
+                     --mcscanx_path [path to McScaX installation]
+                     -resume
+```
 
 ### Tutorial
 
@@ -55,9 +65,42 @@ nextflow run main.nf -params-file params/params.json \
 - [Running syntelogfinder on phased reference of haxaploid wheat](https://polyase.readthedocs.io/en/latest/tutorial.html)
 
 
-## Output
+### Output
 
-category grouping in tsv file with information about CDS lenght difference.
+Here's the formatted sample output for your README:
+
+## Sample Output
+
+The pipeline generates a tab-separated file with the following columns:
+
+| Column | Description |
+|--------|-------------|
+| `gene_id` | Gene identifier |
+| `transcript_id` | Transcript identifier |
+| `Synt_id` | Synteny group identifier |
+| `synteny_category` | Summary of syntenic gene distribution across haplotypes |
+| `syntenic_genes` | Comma-separated list of all syntenic genes |
+| `haplotype` | Haplotype assignment |
+| `CDS_length_category` | CDS length classification (if applicable) |
+| `CDS_haplotype_with_longest_annotation` | Haplotype with the longest CDS annotation (if applicable) |
+
+### Example Output
+
+```tsv
+gene_id	transcript_id	Synt_id	synteny_category	syntenic_genes	haplotype	CDS_length_category	CDS_haplotype_with_longest_annotation
+TraesAK58CH7A01G122800	TraesAK58CH7A01G122800.1	Synt_id_0	1hapA_3hapB_1hapD_no_s	TraesAK58CH7A01G122800.1,TraesAK58CH1B01G017800.1,TraesAK58CH4B01G024800.1,TraesAK58CH2B01G118200.1,TraesAK58CH2D01G119400.1	hapA
+TraesAK58CH1A01G005100	TraesAK58CH1A01G005100.1	Synt_id_1	2hapA_1hapB_2hapD_no_s	TraesAK58CH1A01G005100.1,TraesAK58CH3A01G490400.1,TraesAK58CH1B01G017500.1,TraesAK58CH1D01G000500.1,TraesAK58CH7D01G525700.1	hapA
+TraesAK58CH3A01G490400	TraesAK58CH3A01G490400.1	Synt_id_1	2hapA_1hapB_2hapD_no_s	TraesAK58CH1A01G005100.1,TraesAK58CH3A01G490400.1,TraesAK58CH1B01G017500.1,TraesAK58CH1D01G000500.1,TraesAK58CH7D01G525700.1	hapA
+TraesAK58CH3A01G236000	TraesAK58CH3A01G236000.1	Synt_id_2	1hapA_1hapB_2hapD_no_s	TraesAK58CH3A01G236000.1,TraesAK58CH1B01G017200.1,TraesAK58CH1D01G000900.1,TraesAK58CH5D01G521100.1	hapA
+TraesAK58CH1A01G006000	TraesAK58CH1A01G006000.1	Synt_id_3	3hapA_0hapB_1hapD_no_s	TraesAK58CH1A01G006000.1,TraesAK58CH3A01G436000.1,TraesAK58CH5A01G002300.1,<NA>,TraesAK58CH1D01G365400.1	hapA
+TraesAK58CH3A01G436000	TraesAK58CH3A01G436000.1	Synt_id_3	3hapA_0hapB_1hapD_no_s	TraesAK58CH1A01G006000.1,TraesAK58CH3A01G436000.1,TraesAK58CH5A01G002300.1,<NA>,TraesAK58CH1D01G365400.1	hapA
+```
+
+**Key Features:**
+- Each gene is assigned to a synteny group (`Synt_id`)
+- The `synteny_category` shows the distribution pattern (e.g., `2hapA_1hapB_2hapD_no_s` means 2 genes in hapA, 1 in hapB, 2 in hapD, with no specific pattern)
+- Missing syntenic genes are indicated with `<NA>`
+- All syntenic gene members are listed in the `syntenic_genes` column
 
 
 ### Plots

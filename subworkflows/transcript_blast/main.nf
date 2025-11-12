@@ -10,26 +10,26 @@ workflow TRANSCRIPT_BLAST {
 
     main:
         // Extract transcript sequences
-        gffread_out = GFFREAD_TRANSCRIPT (
+        GFFREAD_TRANSCRIPT (
             gff,
             fasta
         )
 
         // Build BLAST database
         BLAST_MAKEBLASTDB(
-            gffread_out.gffread_fasta
+            GFFREAD_TRANSCRIPT.out.gffread_fasta
         )
 
         // Run BLAST analysis
-        blast_results = BLAST_BLASTN(
-            gffread_out.gffread_fasta,
+        BLAST_BLASTN(
+            GFFREAD_TRANSCRIPT.out.gffread_fasta,
             BLAST_MAKEBLASTDB.out.db,
-            Channel.empty(),
-            Channel.empty(),
-            Channel.empty()
+            [],                                     // path taxidlist (empty)
+            [],                                     // val taxids (empty)
+            []
         )
 
     emit:
-        cds_fasta = gffread_out.gffread_fasta
-        results   = blast_results.txt
+        cds_fasta = GFFREAD_TRANSCRIPT.out.gffread_fasta
+        results   = BLAST_BLASTN.out.txt
 }

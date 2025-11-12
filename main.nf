@@ -30,7 +30,6 @@ gff_ch = Channel.fromPath(params.reference_gff)
 
 fasta_ch = Channel.fromPath(params.reference_fasta)
 
-promotor_length = Channel.from([3000])
 
 // Main workflow
 workflow {
@@ -68,7 +67,10 @@ workflow {
         .groupTuple(by: 0)
 
     // GENESPACE Analysis
-    genespace_ch = GENESPACE_ANALYSIS(gffread_output, AGAT_SPKEEPLONGESTISOFORM.out.gff)
+    genespace_ch = GENESPACE_ANALYSIS(
+                                        gffread_output,
+                                        AGAT_SPKEEPLONGESTISOFORM.out.gff
+                                        )
 
     // Extend GFF features
     // extended_gff = EXTEND_GFF_FEATURES(gff_ch, fasta_ch)
@@ -77,12 +79,12 @@ workflow {
         // Check if the TRANSCRIPT_BLAST subworkflow is enabled
         log.info "Running TRANSCRIPT_BLAST subworkflow"
         // Run TRANSCRIPT BLAST subworkflow
-        blast_ch = TRANSCRIPT_BLAST(AGAT_SPKEEPLONGESTISOFORM.out.gff, haplotype_ch.map{it.fasta})
-
+       TRANSCRIPT_BLAST(AGAT_SPKEEPLONGESTISOFORM.out.gff,
+                        haplotype_ch.map{it.fasta})
 
         SYNTELOG_SIMILARITY(
-        genespace_ch,
-        blast_ch.results)
+                            genespace_ch,
+                            TRANSCRIPT_BLAST.out.results)
 
     } else {
         log.info "Skipping TRANSCRIPT_BLAST subworkflow"
@@ -92,10 +94,25 @@ workflow {
 
 // Function to check if required parameters are set
 def checkRequiredParams() {
-    def required = ['reference_fasta', 'reference_gff', 'outdir', 'mcscanx_path']
+    def required = ['reference_fasta', 'reference_gff', 'outdir']
     for (param in required) {
         if (params[param] == null) {
             exit 1, "Required parameter '${param}' is missing"
+        }
+    }
+
+    // Check if optional parameters are set based on profile
+    if (workflow.profile.contains('conda')) {
+        def conda_required = ['mcscanx_path']
+        for (param in conda_required) {
+            if (params[param] == null) {
+                exit 1, "Required parameter '${param}' is missing when using conda profile"
+            }
+        }
+    } else {
+        // Set mcscanx_path to 'no_path' for non-conda profiles (e.g., singularity)
+        if (params.mcscanx_path == null) {
+            params.mcscanx_path = 'no_path'
         }
     }
 }
