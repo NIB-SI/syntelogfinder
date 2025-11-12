@@ -43,7 +43,6 @@ The parms.json should look like this
 Run like this (after cloning the repository):
 ```
 nextflow run main.nf -params-file params/params.json \
-                     -c cond/nextflow.config \
                      -profile singularity \
                      -resume
 ```
@@ -53,7 +52,6 @@ or with conda
 
 ```
 nextflow run main.nf -params-file params/params.json \
-                     -c cond/nextflow.config \
                      -profile singularity \
                      --mcscanx_path [path to McScaX installation]
                      -resume
