@@ -2,7 +2,7 @@
 # syntelogfinder
 
 Nextflow pipeline to group genes on polyploid phased assemblies that are orthologous and syntelogous based on GENESPACE results.
-
+This pipeline is part of the [LongPolyASE](https://polyase.readthedocs.io/en/latest/index.html) framework for long-read RNA-seq allele-specific expressin analysis in polyploid organisms. 
 
 ## Getting started
 
