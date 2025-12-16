@@ -13,7 +13,7 @@ Requirements:
 - conda
 
 The following packages are not in bioconda/pip so need to be installed manually if running with `--profile conda` (for singularity this is not necessary):
-- McxScan (follow instructions [here]([/scratch/nadjafn/potato-allelic-orthogroups/modules/local/genespace/genespace_run/environment.yml](https://github.com/wyp1125/MCScanX?tab=readme-ov-file#installation)) and provide path to installation to --mcscanx_path)
+- McxScan (follow instructions [here](https://github.com/wyp1125/MCScanX?tab=readme-ov-file#installation) and provide path to installation to --mcscanx_path)
 - GENESPACE ([instructions](https://github.com/jtlovell/GENESPACE?tab=readme-ov-file#2-software-installation))(inside the conda environment genespace-env (syntelogfinder/modules/local/genespace/genespace_run/environment.yml))
 
 
