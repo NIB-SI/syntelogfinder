@@ -53,8 +53,12 @@ The parms.json should look like this
 }
 ```
 
-Run like this (after cloning the repository):
+Run like this:
 ```
+git clone https://github.com/NIB-SI/syntelogfinder.git
+
+cd syntelogfinder
+
 nextflow run main.nf -params-file params/params.json \
                      -profile singularity \
                      -resume
@@ -68,6 +72,22 @@ nextflow run main.nf -params-file params/params.json \
                      -profile singularity \
                      --mcscanx_path [path to McScaX installation]
                      -resume
+```
+## Test data
+
+A test dataset is available for testing and demonstration purposes. This dataset contains a phased genome assembly and annotation for chromosome 1 across all haplotypes of the tetraploid potato cultivar Atlantic.
+
+- [fasta](https://zenodo.org/records/17590760/files/ATL_v3.asm.chr01_all_haplotypes.fa.gz?download=1&preview=1)
+- [gtf](https://zenodo.org/records/17590760/files/ATL_unitato_liftoff.chr01_all_haplotypes.gtf.gz?download=1&preview=1)
+
+Then the `params.json` should look like this:
+```json
+{
+    "reference_fasta": "ATL_v3.asm.chr01_all_haplotypes.fa",
+    "reference_gff": "ATL_unitato_liftoff.chr01_all_haplotypes.gtf",
+    "ploidy": 4,
+    "outdir": "output_path"
+}
 ```
 
 ### Tutorial
