@@ -2,7 +2,7 @@
 # syntelogfinder
 
 Nextflow pipeline to group genes on polyploid phased assemblies that are orthologous and syntelogous based on GENESPACE results.
-
+This pipeline is part of the [LongPolyASE](https://polyase.readthedocs.io/en/latest/index.html) framework for long-read RNA-seq allele-specific expressin analysis in polyploid organisms. 
 
 ## Getting started
 
@@ -13,22 +13,35 @@ Requirements:
 - conda
 
 The following packages are not in bioconda/pip so need to be installed manually if running with `--profile conda` (for singularity this is not necessary):
-- McxScan (follow instructions [here](/scratch/nadjafn/potato-allelic-orthogroups/modules/local/genespace/genespace_run/environment.yml) and provide path to installation to --mcscanx_path)
+- McxScan (follow instructions [here](https://github.com/wyp1125/MCScanX?tab=readme-ov-file#installation) and provide path to installation to --mcscanx_path)
 - GENESPACE ([instructions](https://github.com/jtlovell/GENESPACE?tab=readme-ov-file#2-software-installation))(inside the conda environment genespace-env (syntelogfinder/modules/local/genespace/genespace_run/environment.yml))
 
 
-minimal input:
+### minimal input:
 - parameter file (params.json)
 - genome fasta of phased reference (chromosome names like this: >chr[_]01_1, >chr[_]01_2 Where the _suffix is the haplotype )
-- gff with CDS corresponding to the reference (same chromosome names!)
+- gff or gtf with CDS corresponding to the reference (same chromosome names!)
 
 The gff file should look like this https://agat.readthedocs.io/en/latest/gff_to_gtf.html#the-gff-file-to-convert
 with the following features:
 
 - gene
-- mRNA
+- mRNA/transcript
 - exon
 - CDS
+
+Or a gtf file with the following features:
+
+- gene
+- mRNA/transcript
+- exon
+- CDS
+
+Mandatory Attributes
+
+- gene_id - must be present on ALL lines
+- transcript_id - required for transcript, exon, CDS features
+- Parent - links child features to parent 
 
 The parms.json should look like this
 ```
@@ -40,10 +53,13 @@ The parms.json should look like this
 }
 ```
 
-Run like this (after cloning the repository):
+Run like this:
 ```
+git clone https://github.com/NIB-SI/syntelogfinder.git
+
+cd syntelogfinder
+
 nextflow run main.nf -params-file params/params.json \
-                     -c cond/nextflow.config \
                      -profile singularity \
                      -resume
 ```
@@ -53,13 +69,46 @@ or with conda
 
 ```
 nextflow run main.nf -params-file params/params.json \
-                     -c cond/nextflow.config \
                      -profile singularity \
                      --mcscanx_path [path to McScaX installation]
                      -resume
 ```
+### Test data 
 
-### Tutorial
+A test dataset is available for testing and demonstration purposes. This dataset contains a phased genome assembly and annotation for chromosome 1 across all haplotypes of the tetraploid potato cultivar Atlantic.
+
+- [fasta](https://zenodo.org/records/17590760/files/ATL_v3.asm.chr01_all_haplotypes.fa.gz?download=1&preview=1)
+- [gtf](https://zenodo.org/records/17590760/files/ATL_unitato_liftoff.chr01_all_haplotypes.gtf.gz?download=1&preview=1)
+
+
+Then the `params_test.json` should look like this:
+```json
+{
+    "reference_fasta": "{download_dir}/ATL_v3.asm.chr01_all_haplotypes.fa",
+    "reference_gff": "{download_dir}/ATL_unitato_liftoff.chr01_all_haplotypes.gtf",
+    "ploidy": 4,
+    "outdir": "output_path"
+}
+```
+
+### Running Syntelogfinder on test data
+
+After downloading the fasta and gtf file and preperation of the parameter file the pipeline can be run like this:
+```bash
+git clone https://github.com/NIB-SI/syntelogfinder.git --branch v1.0.0
+cd syntelogfinder
+conda create -n nextflow -c bioconda nextflow 
+conda activate nextflow
+nextflow run main.nf \
+  -params-file params/params_test.json \
+  -profile singularity \
+  --run_blast \
+  -resume 
+```
+
+**Expected runtime:** 10 minutes (if all singularity images are already pulled)
+
+## Tutorial
 
 - [Running syntelogfinder on phased reference of diplpid rice](https://polyase.readthedocs.io/en/latest/tutorial_rice.html)
 - [Running syntelogfinder on phased reference of haxaploid wheat](https://polyase.readthedocs.io/en/latest/tutorial.html)
@@ -69,7 +118,7 @@ nextflow run main.nf -params-file params/params.json \
 
 Here's the formatted sample output for your README:
 
-## Sample Output
+### Sample Output
 
 The pipeline generates a tab-separated file with the following columns:
 

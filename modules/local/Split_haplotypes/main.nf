@@ -17,8 +17,8 @@ process SPLIT_HAPLOTYPES {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     # Extract unique haplotype suffixes from the GFF file.
-    haplotypes=\$(grep -o '[Cc]hr_\\?[0-9]\\+_\\?[A-Z0-9]' "$gff" | \
-    sed 's/.*\\([A-Z0-9]\\)\$/\\1/' | \
+    haplotypes=\$(grep -o '[Cc]hr_\\?[0-9]\\+_\\?[A-Z1-9]' "$gff" | \
+    sed 's/.*\\([A-Z1-9]\\)\$/\\1/' | \
     sort -u)
 
     # If no Chr pattern found, try the original numeric pattern
@@ -29,7 +29,7 @@ process SPLIT_HAPLOTYPES {
     # Split into haplotype-specific files
     for hap in \$haplotypes; do
         echo \$hap
-        if [[ "\$hap" =~ ^[0-9]+\$ ]]; then
+        if [[ "\$hap" =~ ^[1-9]+\$ ]]; then
             # Numeric haplotype (original pattern)
             grep "chr_\\?[0-9]\\+_\${hap}\\b" "$gff" > "hap\${hap}.gff"
         else

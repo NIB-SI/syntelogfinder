@@ -2,12 +2,17 @@
 
 nextflow.enable.dsl = 2
 
-// Log pipeline information
 log.info """
-         SyntelogFinder
-         ===================================
-         """
-         .stripIndent()
+  ____             _       _           _____ _           _           
+ / ___| _   _ _ __| |_ ___| | ___   __|  ___(_)_ __   __| | ___ _ __ 
+ \\___ \\| | | | '_ \\_  __/ _ \\ |/ _ \\/ _| |_  | | '_ \\ / _` |/ _ \\ '__|
+  ___) | |_| | | | || ||  __/ | (_) | |_|  _| | | | | | (_| |  __/ |   
+ |____/ \\__, |_| |_| \\__\\___|_|\\___/ \\__|_|   |_|_| |_|\\__,_|\\___|_|   
+        |___/                                                           
+                          🔍
+           SyntelogFinder v1.0.0
+"""
+.stripIndent()
 
 // Import processes from modules
 include { AGAT_SPKEEPLONGESTISOFORM                         } from './modules/nf-core/agat/spkeeplongestisoform'
