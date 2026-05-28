@@ -34,7 +34,7 @@ process SPLIT_HAPLOTYPES {
             grep "chr_\\?[0-9]\\+_\${hap}\\b" "$gff" > "hap\${hap}.gff"
         else
             # Alphanumeric haplotype (new pattern)
-            grep "[Cc]hr[0-9]\\+_\\?\${hap}\\b" "$gff" > "hap\${hap}.gff"
+            grep "[Cc]hr_\\?[0-9]\\+_\\?\${hap}\\b" "$gff" > "hap\${hap}.gff"
         fi
     done
 
