@@ -38,3 +38,6 @@ params/desiree_liftoff.json
 runMain.sh
 params/atlantic_liftoff.json
 runMain.sh
+strawberry_example.sh
+params/strawberry.json
+references/*

@@ -29,7 +29,7 @@ process GENESPACE_PARSE {
 
     """
     parse_genespace_pangenes.py \\
-        --pangenes $pangenes \\s
+        --pangenes $pangenes \\
         --gff $gff \\
         --output ${prefix} \\
         -s $haplotypes_arg \\
