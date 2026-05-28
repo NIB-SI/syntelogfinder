@@ -29,12 +29,12 @@ process GENESPACE_PARSE {
 
     """
     parse_genespace_pangenes.py \\
-        --pangenes $pangenes \\
+        --pangenes $pangenes \\s
         --gff $gff \\
         --output ${prefix} \\
         -s $haplotypes_arg \\
         $args
-    echo "echo!!?!?##!"
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')

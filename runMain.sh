@@ -1,7 +1,10 @@
 
 # Desiree with desiree annotation
 
-nextflow run main.nf -resume -params-file params/desiree_liftoff.json -c conf/nextflow.config -profile conda --run_blast --mcscanx_path /DKED/scratch/nadjafn/MCScanX
+nextflow run main.nf -resume -params-file params/desiree_liftoff.json  -profile singularity --run_blast --mcscanx_path /DKED/scratch/nadjafn/MCScanX
+
+
+
 nextflow run main.nf -resume -params-file params/my_example.json -c conf/nextflow.config -profile conda --run_blast --mcscanx_path /DKED/scratch/nadjafn/MCScanX
 
 
@@ -35,4 +38,4 @@ nextflow run main.nf -resume -params-file params/rice_Nip.json  -profile singula
 nextflow run main.nf -resume -params-file params/my_example.json -c conf/nextflow.config -profile conda --run_blast --mcscanx_path /DKED/scratch/nadjafn/MCScanX
 
 
-nextflow run main.nf -resume -params-file params/my_example.json  -profile singularity --run_blast 
+nextflow run main.nf -resume -params-file params/my_example.json  -profile singularity --run_blast

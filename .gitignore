@@ -33,3 +33,8 @@ params/atlantic.json
 runMain.sh
 .nextflow.pid
 params/my_example.json
+params/desiree_liftoff.json
+.gitignore
+runMain.sh
+params/atlantic_liftoff.json
+runMain.sh
