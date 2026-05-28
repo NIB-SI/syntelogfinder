@@ -33,3 +33,6 @@ params/atlantic.json
 runMain.sh
 .nextflow.pid
 params/my_example.json
+references
+strawberry_example
+params/strawberry.json
