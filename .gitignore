@@ -43,3 +43,6 @@ params/strawberry.json
 references/*
 brassica_example.sh
 params/brassica.json
+references
+strawberry_example
+params/strawberry.json

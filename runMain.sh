@@ -1,5 +1,5 @@
 
-# Desiree with desiree annotation
+# Running the main pipeline with Nextflow, using the specified parameters and configuration.
 
 nextflow run main.nf -resume -params-file params/desiree_liftoff.json  -profile singularity --run_blast --mcscanx_path /DKED/scratch/nadjafn/MCScanX
 
