@@ -41,3 +41,5 @@ runMain.sh
 strawberry_example.sh
 params/strawberry.json
 references/*
+brassica_example.sh
+params/brassica.json
