@@ -33,6 +33,16 @@ params/atlantic.json
 runMain.sh
 .nextflow.pid
 params/my_example.json
+params/desiree_liftoff.json
+.gitignore
+runMain.sh
+params/atlantic_liftoff.json
+runMain.sh
+strawberry_example.sh
+params/strawberry.json
+references/*
+brassica_example.sh
+params/brassica.json
 references
 strawberry_example
 params/strawberry.json

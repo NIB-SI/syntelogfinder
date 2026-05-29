@@ -183,7 +183,7 @@ def parse_gff(gff_file: str) -> pd.DataFrame:
     # Extract gene_id
     gff['gene_id'] = np.where(
         mask_mrna,
-        gff['attributes'].str.extract(r'gene(?:_id|ID)=([^;]+)')[0],
+        gff['attributes'].str.extract(r'(?:gene_id|geneID|gene)=([^;]+)')[0],
         ''
     )
 
@@ -283,7 +283,7 @@ def add_synteny_category(pangenes: pd.DataFrame) -> pd.DataFrame:
     # Check for special characters
     has_special_chars = False
     for hap in haplotype_cols:
-        has_special_chars = has_special_chars | pangenes[hap].str.contains('\*') | pangenes[hap].str.contains('\+')
+        has_special_chars = has_special_chars | pangenes[hap].str.contains(r'\*') | pangenes[hap].str.contains(r'\+')
 
     pangenes.loc[has_special_chars, 'true_synteny'] = 'no_s'
 
@@ -349,13 +349,11 @@ def percent_func(pct: float, allvalues: np.ndarray) -> str:
     absolute = int(pct / 100. * np.sum(allvalues))
     return "{:.1f}%\n({:d})".format(pct, absolute)
 
-def make_pie_chart(gff_pangenes: pd.DataFrame, syntelogs_category: str, output_prefix: str) -> None:
-    """Create a pie chart showing distribution of synteny categories."""
-    mrna_data = gff_pangenes[gff_pangenes['type'].isin(['mRNA', 'transcript'])].copy()
-    mrna_data = mrna_data.sort_values('synteny_category')
-    # group by gene_id to avoid double counting of isoforms
-    mrna_data = mrna_data.drop_duplicates(subset=['gene_id'])
-    synt_counts = mrna_data['synteny_category'].value_counts()
+def make_final_output_pie_chart(final_output: pd.DataFrame, syntelogs_category: str, output_prefix: str) -> None:
+    """Create a pie chart showing distribution of synteny categories in final_output."""
+    data = final_output.drop_duplicates(subset=['transcript_id']).copy()
+    data = data.sort_values('synteny_category')
+    synt_counts = data['synteny_category'].value_counts()
 
     # Get top 7 categories and group the rest as "other"
     synt_counts_top = synt_counts[:7].copy()
@@ -371,7 +369,7 @@ def make_pie_chart(gff_pangenes: pd.DataFrame, syntelogs_category: str, output_p
 
     # Create pie chart
     explode = tuple([0.1 * (7-i) for i in range(len(synt_counts_top))])
-    plt.figure(figsize=(7, 7))
+    plt.figure(figsize=(6, 6))
     synt_counts_top.plot.pie(
         startangle=90,
         explode=explode,
@@ -380,7 +378,39 @@ def make_pie_chart(gff_pangenes: pd.DataFrame, syntelogs_category: str, output_p
     )
 
     plt.tight_layout()
-    plt.savefig(f'{output_prefix}_pie_chart.svg', bbox_inches='tight')
+    plt.savefig(f'{output_prefix}_transcript_categories_pie_chart.svg', bbox_inches='tight')
+    plt.close()
+
+def make_transcript_pie_chart(final_output: pd.DataFrame, syntelogs_category: str, output_prefix: str) -> None:
+    """Create a pie chart showing distribution of synteny categories in final_output."""
+    data = final_output.drop_duplicates(subset=['Synt_id']).copy()
+    data = data.sort_values('synteny_category')
+    synt_counts = data['synteny_category'].value_counts()
+
+    # Get top 7 categories and group the rest as "other"
+    synt_counts_top = synt_counts[:7].copy()
+    if len(synt_counts) > 7:
+        synt_counts_top['other'] = synt_counts[7:].sum()
+    synt_counts_top.sort_index(inplace=True)
+
+    # Set up colors
+    colors = ['#D3D3D3'] * len(synt_counts_top)
+    if syntelogs_category in synt_counts_top.index:
+        highlight_idx = list(synt_counts_top.index).index(syntelogs_category)
+        colors[highlight_idx] = '#FF0000'
+
+    # Create pie chart
+    explode = tuple([0.1 * (7-i) for i in range(len(synt_counts_top))])
+    plt.figure(figsize=(6, 6))
+    synt_counts_top.plot.pie(
+        startangle=90,
+        explode=explode,
+        autopct=lambda pct: percent_func(pct, synt_counts),
+        colors=colors
+    )
+
+    plt.tight_layout()
+    plt.savefig(f'{output_prefix}_syntelog_categories_pie_chart.svg', bbox_inches='tight')
     plt.close()
 
 def check_length_values(row: pd.Series, percent: float) -> bool:
@@ -560,9 +590,8 @@ def main():
     print("Merging pangenes and GFF data...")
     gff_pangenes = merge_pangenes_gff(pangenes_pivot, gff)
 
-    # Create pie charts
-    print("Creating pie chart...")
-    make_pie_chart(gff_pangenes, args.syntelogs_category, args.output)
+
+
 
     # Filter for syntelogs
     print("Filtering syntelogs...")
@@ -587,10 +616,17 @@ def main():
     print("Merging and saving final output...")
     if len(syntelogs_lengths_list) > 1:
         syntelogs_lengths_cds = syntelogs_lengths_list[1].explode('transcript_id')
+        syntelogs_lengths_exon = syntelogs_lengths_list[0].explode('transcript_id')
 
         pangenes_pivot = pd.merge(
             pangenes_pivot,
             syntelogs_lengths_cds,
+            on='transcript_id',
+            how='left'
+        )
+        pangenes_pivot = pd.merge(
+            pangenes_pivot,
+            syntelogs_lengths_exon,
             on='transcript_id',
             how='left'
         )
@@ -605,13 +641,17 @@ def main():
 
         final_output = pd.merge(
             final_output,
-            gff_pangenes[['transcript_id', 'gene_id']],
+            gff_pangenes[['transcript_id', 'gene_id']].drop_duplicates(subset=['transcript_id']),
             on='transcript_id',
             how='left'
         )
 
         final_output.rename(columns={'Synt_id_x': 'Synt_id'}, inplace=True)
         final_output.set_index('gene_id', inplace=True)
+        make_final_output_pie_chart(final_output, args.syntelogs_category, args.output)
+        # Create pie charts
+        print("Creating transcript pie chart...")
+        make_transcript_pie_chart(final_output, args.syntelogs_category, args.output)
         final_output.to_csv(f'{args.output}_categories.tsv', sep='\t', index=True)
 
     print("Analysis complete!")

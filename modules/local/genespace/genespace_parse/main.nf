@@ -34,7 +34,7 @@ process GENESPACE_PARSE {
         --output ${prefix} \\
         -s $haplotypes_arg \\
         $args
-    echo "echo!!?!?##!"
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
